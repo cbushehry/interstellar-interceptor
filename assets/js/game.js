@@ -1,4 +1,6 @@
-// Constants for configurations
+// Define constants for game settings
+const LASER_SPEED = 1000;
+const PLAYER_SCALE = 1;
 const PLAYER_SPEED = 100;
 const KEY_CONFIG = {
     UP: 'W',
@@ -61,27 +63,31 @@ function resize(gameSize) {
 }
 
 function preload() {
-    this.load.image('background', 'assets/images/background.png');
-    this.load.image('background-stars', 'assets/images/background-stars.png');
-    this.load.image('spaceship11', 'assets/images/spaceship-11.png');
-    this.load.image('spaceship12', 'assets/images/spaceship-12.png');
+    this.load.image('background', 'assets/images/background1.png');
+    this.load.image('background-stars', 'assets/images/background2.png');
+    this.load.image('asteroid1', 'assets/images/asteroid1.png');
+    this.load.image('asteroid2', 'assets/images/asteroid2.png');
+    this.load.image('playerShip1', 'assets/images/playerShip1.png');
+    this.load.image('playerShip2', 'assets/images/playerShip2.png');
+    this.load.image('laser1', 'assets/images/laser1.png');
 }
 
 function create() {
     this.bg = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'background').setOrigin(0);
     this.bgStars = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'background-stars').setOrigin(0);
 
-    // Adding the player sprite at the middle of the screen
-    this.player = this.physics.add.sprite(game.scale.width / 2, game.scale.height / 2, 'spaceship11');
+    // Initialize player sprite
+    this.player = this.physics.add.sprite(game.scale.width / 2, game.scale.height / 2, 'playerShip1');
+    this.player.setScale(PLAYER_SCALE);
 
     // Creating an animation for the propelling fire effect
     this.anims.create({
         key: 'fly',
         frames: [
-            { key: 'spaceship11' },
-            { key: 'spaceship12' }
+            { key: 'playerShip1' },
+            { key: 'playerShip2' }
         ],
-        frameRate: 10, 
+        frameRate: 8, 
         repeat: -1
     });
 
