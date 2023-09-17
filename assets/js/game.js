@@ -1,3 +1,12 @@
+// Constants for configurations
+const PLAYER_SPEED = 100;
+const KEY_CONFIG = {
+    UP: 'W',
+    DOWN: 'S',
+    LEFT: 'A',
+    RIGHT: 'D'
+};
+
 let config = {
     type: Phaser.AUTO,
     parent: 'game-container',
@@ -72,7 +81,7 @@ function create() {
             { key: 'spaceship11' },
             { key: 'spaceship12' }
         ],
-        frameRate: 10, // Adjust the frame rate to your liking
+        frameRate: 10, 
         repeat: -1
     });
 
@@ -81,30 +90,30 @@ function create() {
 
     // Setting up universal controls with WASD keys
     controls = {
-        up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
-        down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
-        left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
-        right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D)
+        up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.UP]),
+        down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.DOWN]),
+        left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.LEFT]),
+        right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.RIGHT])
     };
 }
 
 function update() {
-    // Basic movement controls with WASD
+    // Basic movement controls with WASD using player speed constant
     if (controls.left.isDown) {
-        this.player.setVelocityX(-200); // Adjust velocity as needed
+        this.player.setVelocityX(-PLAYER_SPEED);
     }
     else if (controls.right.isDown) {
-        this.player.setVelocityX(200);
+        this.player.setVelocityX(PLAYER_SPEED);
     }
     else {
         this.player.setVelocityX(0);
     }
 
     if (controls.up.isDown) {
-        this.player.setVelocityY(-200);
+        this.player.setVelocityY(-PLAYER_SPEED);
     }
     else if (controls.down.isDown) {
-        this.player.setVelocityY(200);
+        this.player.setVelocityY(PLAYER_SPEED);
     }
     else {
         this.player.setVelocityY(0);
