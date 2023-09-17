@@ -9,59 +9,6 @@ const KEY_CONFIG = {
     RIGHT: 'D'
 };
 
-let config = {
-    type: Phaser.AUTO,
-    parent: 'game-container',
-    scene: {
-        preload: preload,
-        create: create,
-        update: update,
-        resize: resize,
-    },
-    physics: {
-        default: 'arcade',
-        arcade: {
-            gravity: { y: 0 },  // Consider revising this value for a space game
-            debug: false
-        }
-    },
-    scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH,
-        width: window.innerWidth,
-        height: window.innerHeight
-    },
-    callbacks: {
-        postBoot: function (game) {
-            // Listen for window resize events
-            window.addEventListener('resize', function () {
-                game.scale.resize(window.innerWidth, window.innerHeight);
-                game.scene.scenes[0].resize({ width: window.innerWidth, height: window.innerHeight });
-            });
-        }
-    },
-};
-
-let game = new Phaser.Game(config);
-let controls;
-
-function resize(gameSize) {
-    let width = gameSize.width;
-    let height = gameSize.height;
-
-    if (width === undefined) {
-        width = this.game.renderer.width;
-    }
-    if (height === undefined) {
-        height = this.game.renderer.height;
-    }
-    
-    this.cameras.resize(width, height);
-
-    this.bg.setSize(width, height);
-    this.bgStars.setSize(width, height);
-}
-
 function preload() {
     this.load.image('background', 'assets/images/background1.png');
     this.load.image('background-stars', 'assets/images/background2.png');
@@ -125,3 +72,56 @@ function update() {
         this.player.setVelocityY(0);
     }
 }
+
+let config = {
+    type: Phaser.AUTO,
+    parent: 'game-container',
+    scene: {
+        preload: preload,
+        create: create,
+        update: update,
+        resize: resize,
+    },
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 0 },  // Consider revising this value for a space game
+            debug: false
+        }
+    },
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        width: window.innerWidth,
+        height: window.innerHeight
+    },
+    callbacks: {
+        postBoot: function (game) {
+            // Listen for window resize events
+            window.addEventListener('resize', function () {
+                game.scale.resize(window.innerWidth, window.innerHeight);
+                game.scene.scenes[0].resize({ width: window.innerWidth, height: window.innerHeight });
+            });
+        }
+    },
+};
+
+function resize(gameSize) {
+    let width = gameSize.width;
+    let height = gameSize.height;
+
+    if (width === undefined) {
+        width = this.game.renderer.width;
+    }
+    if (height === undefined) {
+        height = this.game.renderer.height;
+    }
+    
+    this.cameras.resize(width, height);
+
+    this.bg.setSize(width, height);
+    this.bgStars.setSize(width, height);
+}
+
+// Create the game instance
+const game = new Phaser.Game(config);
