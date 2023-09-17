@@ -1,7 +1,5 @@
 let config = {
     type: Phaser.AUTO,
-    width: window.innerWidth,
-    height: window.innerHeight,
     parent: 'game-container',
     scene: {
         preload: preload,
@@ -12,7 +10,7 @@ let config = {
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 300 },
+            gravity: { y: 0 },  // Consider revising this value for a space game
             debug: false
         }
     },
@@ -34,6 +32,7 @@ let config = {
 };
 
 let game = new Phaser.Game(config);
+let controls;
 
 function resize(gameSize) {
     let width = gameSize.width;
@@ -53,18 +52,61 @@ function resize(gameSize) {
 }
 
 function preload() {
-    // Load your assets here, e.g.:
     this.load.image('background', 'assets/images/background.png');
     this.load.image('background-stars', 'assets/images/background-stars.png');
-    // this.load.image('star', 'path/to/your/star.png');
+    this.load.image('spaceship11', 'assets/images/spaceship-11.png');
+    this.load.image('spaceship12', 'assets/images/spaceship-12.png');
 }
 
 function create() {
     this.bg = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'background').setOrigin(0);
     this.bgStars = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'background-stars').setOrigin(0);
+
+    // Adding the player sprite at the middle of the screen
+    this.player = this.physics.add.sprite(game.scale.width / 2, game.scale.height / 2, 'spaceship11');
+
+    // Creating an animation for the propelling fire effect
+    this.anims.create({
+        key: 'fly',
+        frames: [
+            { key: 'spaceship11' },
+            { key: 'spaceship12' }
+        ],
+        frameRate: 10, // Adjust the frame rate to your liking
+        repeat: -1
+    });
+
+    // Playing the created animation
+    this.player.anims.play('fly');
+
+    // Setting up universal controls with WASD keys
+    controls = {
+        up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+        down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
+        left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+        right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D)
+    };
 }
 
 function update() {
-    // Update your game in this function, e.g.:
-    // Here you'll update your game's logic, check for collisions, etc.
+    // Basic movement controls with WASD
+    if (controls.left.isDown) {
+        this.player.setVelocityX(-200); // Adjust velocity as needed
+    }
+    else if (controls.right.isDown) {
+        this.player.setVelocityX(200);
+    }
+    else {
+        this.player.setVelocityX(0);
+    }
+
+    if (controls.up.isDown) {
+        this.player.setVelocityY(-200);
+    }
+    else if (controls.down.isDown) {
+        this.player.setVelocityY(200);
+    }
+    else {
+        this.player.setVelocityY(0);
+    }
 }
