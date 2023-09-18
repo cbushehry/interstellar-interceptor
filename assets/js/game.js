@@ -56,7 +56,7 @@ function update() {
     var angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, pointer.x, pointer.y);
 
     // Smoothly rotate the player's ship towards the pointer over time
-    this.player.rotation = Phaser.Math.Angle.RotateTo(this.player.rotation, angle, 0.02);
+    this.player.rotation = Phaser.Math.Angle.RotateTo(this.player.rotation, angle, 0.04);
 
     // Calculate velocity based on the player's rotation
     if (controls.up.isDown) {
