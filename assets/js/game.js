@@ -27,6 +27,14 @@ function create() {
     this.player = this.physics.add.sprite(game.scale.width / 2, game.scale.height / 2, 'playerShip1');
     this.player.setScale(PLAYER_SCALE);
 
+    // Setting up universal controls with WASD keys
+    controls = {
+        ACCELERATE: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.ACCELERATE]),
+        DECELERATE: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.DECELERATE]),
+        STRAFE_LEFT: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.STRAFE_LEFT]),
+        STRAFE_RIGHT: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.STRAFE_RIGHT])
+    };
+
     // Creating an animation for the propelling fire effect
     this.anims.create({
         key: 'fly',
@@ -41,13 +49,14 @@ function create() {
     // Playing the created animation
     this.player.anims.play('fly');
 
-    // Setting up universal controls with WASD keys
-    controls = {
-        ACCELERATE: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.ACCELERATE]),
-        DECELERATE: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.DECELERATE]),
-        STRAFE_LEFT: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.STRAFE_LEFT]),
-        STRAFE_RIGHT: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.STRAFE_RIGHT])
-    };
+    // Create a group for lasers
+    lasers = this.physics.add.group({
+        classType: Phaser.Physics.Arcade.Image, // Setting class type to Arcade Image for performance benefits
+        maxSize: 10, // Set a maximum size for the group to limit the number of active laser objects
+    });
+
+    // Setup input for shooting lasers (using space bar here)
+    this.input.keyboard.on('keydown-SPACE', shootLaser, this);
 }
 
 function update() {
@@ -88,6 +97,27 @@ function update() {
     let maxSpeed = 100; // Adjust max speed as necessary
     if (speed > maxSpeed) {
         this.player.body.velocity.normalize().scale(maxSpeed);
+    }
+
+    // Update lasers (e.g., remove lasers that move off-screen)
+    lasers.getChildren().forEach(laser => {
+        if (laser.x < 0 || laser.x > game.scale.width || laser.y < 0 || laser.y > game.scale.height) {
+            laser.setActive(false);
+            laser.setVisible(false);
+        }
+    });
+}
+
+function shootLaser() {
+    // Get an inactive laser from the group or create a new one if none are available
+    let laser = lasers.get(this.player.x, this.player.y, 'laser1');
+    
+    if (laser) {
+        laser.setActive(true);
+        laser.setVisible(true);
+
+        // Set velocity of the laser to make it move in the direction the player is facing
+        this.physics.velocityFromRotation(this.player.rotation, LASER_SPEED, laser.body.velocity);
     }
 }
 
