@@ -1,12 +1,12 @@
 // Define constants for game settings
 const LASER_SPEED = 1000;
 const PLAYER_SCALE = 1;
-const PLAYER_SPEED = 10;
+const PLAYER_ACCEL = 10;
 const KEY_CONFIG = {
-    UP: 'W',
-    DOWN: 'S',
-    LEFT: 'A',
-    RIGHT: 'D'
+    ACCELERATE: 'W',
+    DECELERATE: 'S',
+    STRAFE_LEFT: 'A',
+    STRAFE_RIGHT: 'D'
 };
 
 function preload() {
@@ -43,10 +43,10 @@ function create() {
 
     // Setting up universal controls with WASD keys
     controls = {
-        up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.UP]),
-        down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.DOWN]),
-        left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.LEFT]),
-        right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.RIGHT])
+        ACCELERATE: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.ACCELERATE]),
+        DECELERATE: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.DECELERATE]),
+        STRAFE_LEFT: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.STRAFE_LEFT]),
+        STRAFE_RIGHT: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.STRAFE_RIGHT])
     };
 }
 
@@ -59,28 +59,28 @@ function update() {
     this.player.rotation = Phaser.Math.Angle.RotateTo(this.player.rotation, angle, 0.04);
 
     // Calculate velocity based on the player's rotation
-    if (controls.up.isDown) {
-        this.player.setVelocityX(this.player.body.velocity.x + Math.cos(this.player.rotation) * PLAYER_SPEED * 0.1);
-        this.player.setVelocityY(this.player.body.velocity.y + Math.sin(this.player.rotation) * PLAYER_SPEED * 0.1);
+    if (controls.ACCELERATE.isDown) {
+        this.player.setVelocityX(this.player.body.velocity.x + Math.cos(this.player.rotation) * PLAYER_ACCEL * 0.1);
+        this.player.setVelocityY(this.player.body.velocity.y + Math.sin(this.player.rotation) * PLAYER_ACCEL * 0.1);
     } else {
         this.player.setVelocityX(this.player.body.velocity.x * 0.96);
         this.player.setVelocityY(this.player.body.velocity.y * 0.96);
     }
 
-    if (controls.down.isDown) {
+    if (controls.DECELERATE.isDown) {
         // Slow down the player gradually
         this.player.setVelocityX(this.player.body.velocity.x * 0.94);
         this.player.setVelocityY(this.player.body.velocity.y * 0.94);
     }
 
     // Implementing strafing: moving left and right relative to the direction the player ship is facing
-    if (controls.left.isDown) {
-        this.player.setVelocityX(this.player.body.velocity.x + Math.sin(this.player.rotation) * PLAYER_SPEED * 0.1);
-        this.player.setVelocityY(this.player.body.velocity.y - Math.cos(this.player.rotation) * PLAYER_SPEED * 0.1);
+    if (controls.STRAFE_LEFT.isDown) {
+        this.player.setVelocityX(this.player.body.velocity.x + Math.sin(this.player.rotation) * PLAYER_ACCEL * 0.1);
+        this.player.setVelocityY(this.player.body.velocity.y - Math.cos(this.player.rotation) * PLAYER_ACCEL * 0.1);
     }
-    else if (controls.right.isDown) {
-        this.player.setVelocityX(this.player.body.velocity.x - Math.sin(this.player.rotation) * PLAYER_SPEED * 0.1);
-        this.player.setVelocityY(this.player.body.velocity.y + Math.cos(this.player.rotation) * PLAYER_SPEED * 0.1);
+    else if (controls.STRAFE_RIGHT.isDown) {
+        this.player.setVelocityX(this.player.body.velocity.x - Math.sin(this.player.rotation) * PLAYER_ACCEL * 0.1);
+        this.player.setVelocityY(this.player.body.velocity.y + Math.cos(this.player.rotation) * PLAYER_ACCEL * 0.1);
     }
 
     // Introduce a velocity cap to prevent indefinite acceleration
