@@ -55,31 +55,39 @@ function update() {
     var pointer = this.input.activePointer;
     var angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, pointer.x, pointer.y);
 
-    // Setting the player's rotation to the angle towards the pointer
-    this.player.rotation = angle;
+    // Smoothly rotate the player's ship towards the pointer over time
+    this.player.rotation = Phaser.Math.Angle.RotateTo(this.player.rotation, angle, 0.02);
 
     // Calculate velocity based on the player's rotation
     if (controls.up.isDown) {
         this.player.setVelocityX(this.player.body.velocity.x + Math.cos(this.player.rotation) * PLAYER_SPEED * 0.1);
         this.player.setVelocityY(this.player.body.velocity.y + Math.sin(this.player.rotation) * PLAYER_SPEED * 0.1);
     } else {
-        // You might want to introduce a constant to control the slow down speed
         this.player.setVelocityX(this.player.body.velocity.x * 0.96);
         this.player.setVelocityY(this.player.body.velocity.y * 0.96);
     }
-    
+
     if (controls.down.isDown) {
         // Slow down the player gradually
         this.player.setVelocityX(this.player.body.velocity.x * 0.94);
         this.player.setVelocityY(this.player.body.velocity.y * 0.94);
     }
 
-    // The left and right controls can remain as they are for strafing, or removed if not needed
+    // Implementing strafing: moving left and right relative to the direction the player ship is facing
     if (controls.left.isDown) {
-        this.player.setVelocityX(this.player.body.velocity.x - PLAYER_SPEED * 0.05);
+        this.player.setVelocityX(this.player.body.velocity.x + Math.sin(this.player.rotation) * PLAYER_SPEED * 0.1);
+        this.player.setVelocityY(this.player.body.velocity.y - Math.cos(this.player.rotation) * PLAYER_SPEED * 0.1);
     }
     else if (controls.right.isDown) {
-        this.player.setVelocityX(this.player.body.velocity.x + PLAYER_SPEED * 0.05);
+        this.player.setVelocityX(this.player.body.velocity.x - Math.sin(this.player.rotation) * PLAYER_SPEED * 0.1);
+        this.player.setVelocityY(this.player.body.velocity.y + Math.cos(this.player.rotation) * PLAYER_SPEED * 0.1);
+    }
+
+    // Introduce a velocity cap to prevent indefinite acceleration
+    let speed = Math.sqrt(this.player.body.velocity.x ** 2 + this.player.body.velocity.y ** 2);
+    let maxSpeed = 100; // Adjust max speed as necessary
+    if (speed > maxSpeed) {
+        this.player.body.velocity.normalize().scale(maxSpeed);
     }
 }
 
