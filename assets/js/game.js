@@ -1,7 +1,7 @@
 // Define constants for game settings
 const LASER_SPEED = 1000;
 const PLAYER_SCALE = 1;
-const PLAYER_SPEED = 100;
+const PLAYER_SPEED = 10;
 const KEY_CONFIG = {
     UP: 'W',
     DOWN: 'S',
@@ -51,33 +51,36 @@ function create() {
 }
 
 function update() {
-    // Basic movement controls with WASD using player speed constant
-    if (controls.left.isDown) {
-        this.player.setVelocityX(-PLAYER_SPEED);
-    }
-    else if (controls.right.isDown) {
-        this.player.setVelocityX(PLAYER_SPEED);
-    }
-    else {
-        this.player.setVelocityX(0);
-    }
-
-    if (controls.up.isDown) {
-        this.player.setVelocityY(-PLAYER_SPEED);
-    }
-    else if (controls.down.isDown) {
-        this.player.setVelocityY(PLAYER_SPEED);
-    }
-    else {
-        this.player.setVelocityY(0);
-    }
-
     // Getting the angle between the player and the pointer
     var pointer = this.input.activePointer;
     var angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, pointer.x, pointer.y);
 
     // Setting the player's rotation to the angle towards the pointer
     this.player.rotation = angle;
+
+    // Calculate velocity based on the player's rotation
+    if (controls.up.isDown) {
+        this.player.setVelocityX(this.player.body.velocity.x + Math.cos(this.player.rotation) * PLAYER_SPEED * 0.1);
+        this.player.setVelocityY(this.player.body.velocity.y + Math.sin(this.player.rotation) * PLAYER_SPEED * 0.1);
+    } else {
+        // You might want to introduce a constant to control the slow down speed
+        this.player.setVelocityX(this.player.body.velocity.x * 0.96);
+        this.player.setVelocityY(this.player.body.velocity.y * 0.96);
+    }
+    
+    if (controls.down.isDown) {
+        // Slow down the player gradually
+        this.player.setVelocityX(this.player.body.velocity.x * 0.94);
+        this.player.setVelocityY(this.player.body.velocity.y * 0.94);
+    }
+
+    // The left and right controls can remain as they are for strafing, or removed if not needed
+    if (controls.left.isDown) {
+        this.player.setVelocityX(this.player.body.velocity.x - PLAYER_SPEED * 0.05);
+    }
+    else if (controls.right.isDown) {
+        this.player.setVelocityX(this.player.body.velocity.x + PLAYER_SPEED * 0.05);
+    }
 }
 
 let config = {
