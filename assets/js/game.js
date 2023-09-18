@@ -71,6 +71,13 @@ function update() {
     else {
         this.player.setVelocityY(0);
     }
+
+    // Getting the angle between the player and the pointer
+    var pointer = this.input.activePointer;
+    var angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, pointer.x, pointer.y);
+
+    // Setting the player's rotation to the angle towards the pointer
+    this.player.rotation = angle;
 }
 
 let config = {
