@@ -1,5 +1,5 @@
 // Define constants for game settings
-const LASER_SPEED = 500;
+const LASER_SPEED = 400;
 const PLAYER_SCALE = 1;
 const PLAYER_ACCEL = 10;
 const KEY_CONFIG = {
@@ -144,24 +144,24 @@ function shootLaser() {
 }
 
 function spawnAsteroids() {
-    // Determine a random Y coordinate within the range from which the asteroids will start spawning
-    let startY = Phaser.Math.Between(game.scale.height * 0.1, game.scale.height * 0.9);
+    // Determine a starting Y coordinate within a smaller range to make the group more clustered
+    let startY = Phaser.Math.Between(game.scale.height * 0.08, game.scale.height * 0.24);
     
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 8; i++) {
         // Get an inactive asteroid from the group or create a new one if none are available
         let asteroid = asteroids.get(game.scale.width, startY, 'asteroid1');
         if (asteroid) {
             asteroid.setActive(true);
             asteroid.setVisible(true);
-            asteroid.setScale(Phaser.Math.Between(0.5, 1.5));  // Vary the scale/size of asteroids
+            asteroid.setScale(Phaser.Math.Between(0.6, 1.0));  // Vary the scale/size of asteroids
             
             // Set a velocity for the asteroid to make it move diagonally from top right to bottom left
-            asteroid.body.velocity.x = Phaser.Math.Between(-100, -200);  // Adjust the velocity range as necessary
-            asteroid.body.velocity.y = Phaser.Math.Between(100, 200);  // Adjust the velocity range as necessary
+            asteroid.body.velocity.x = Phaser.Math.Between(-125, -100);  // Narrow the velocity range for more clustering
+            asteroid.body.velocity.y = Phaser.Math.Between(75, 100);     // Narrow the velocity range for more clustering
         }
 
-        // Increment the startY to spread out the asteroids vertically
-        startY += Phaser.Math.Between(50, 150);  // Adjust the vertical spacing as necessary
+        // Increment the startY to spread out the asteroids vertically, but keep them relatively close to each other
+        startY += Phaser.Math.Between(20, 40);  // Narrow the increment range for more clustering
     }
 }
 
