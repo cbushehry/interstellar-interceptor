@@ -1,5 +1,5 @@
 // Define constants for game settings
-const LASER_SPEED = 1000;
+const LASER_SPEED = 500;
 const PLAYER_SCALE = 1;
 const PLAYER_ACCEL = 10;
 const KEY_CONFIG = {
@@ -55,8 +55,8 @@ function create() {
         maxSize: 10, // Set a maximum size for the group to limit the number of active laser objects
     });
 
-    // Setup input for shooting lasers (using space bar here)
-    this.input.keyboard.on('keydown-SPACE', shootLaser, this);
+    // Setup input for shooting lasers using left mouse click
+    this.input.on('pointerdown', shootLaser, this);
 }
 
 function update() {
