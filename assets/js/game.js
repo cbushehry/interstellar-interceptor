@@ -57,6 +57,20 @@ function create() {
 
     // Setup input for shooting lasers using left mouse click
     this.input.on('pointerdown', shootLaser, this);
+
+    // Create a group for asteroids
+    asteroids = this.physics.add.group({
+        classType: Phaser.Physics.Arcade.Image,
+        maxSize: 20,  // Adjust the size as necessary
+    });
+
+    // Schedule asteroid spawns using a timed event
+    this.time.addEvent({
+        delay: 5000,  // Adjust the spawn delay as necessary
+        callback: spawnAsteroids,
+        callbackScope: this,
+        loop: true
+    });
 }
 
 function update() {
@@ -106,6 +120,14 @@ function update() {
             laser.setVisible(false);
         }
     });
+
+    // Update asteroids (e.g., remove asteroids that move off-screen)
+    asteroids.getChildren().forEach(asteroid => {
+        if (asteroid.x < 0 || asteroid.y > game.scale.height) {
+            asteroid.setActive(false);
+            asteroid.setVisible(false);
+        }
+    });
 }
 
 function shootLaser() {
@@ -118,6 +140,28 @@ function shootLaser() {
 
         // Set velocity of the laser to make it move in the direction the player is facing
         this.physics.velocityFromRotation(this.player.rotation, LASER_SPEED, laser.body.velocity);
+    }
+}
+
+function spawnAsteroids() {
+    // Determine a random Y coordinate within the range from which the asteroids will start spawning
+    let startY = Phaser.Math.Between(game.scale.height * 0.1, game.scale.height * 0.9);
+    
+    for (let i = 0; i < 5; i++) {
+        // Get an inactive asteroid from the group or create a new one if none are available
+        let asteroid = asteroids.get(game.scale.width, startY, 'asteroid1');
+        if (asteroid) {
+            asteroid.setActive(true);
+            asteroid.setVisible(true);
+            asteroid.setScale(Phaser.Math.Between(0.5, 1.5));  // Vary the scale/size of asteroids
+            
+            // Set a velocity for the asteroid to make it move diagonally from top right to bottom left
+            asteroid.body.velocity.x = Phaser.Math.Between(-100, -200);  // Adjust the velocity range as necessary
+            asteroid.body.velocity.y = Phaser.Math.Between(100, 200);  // Adjust the velocity range as necessary
+        }
+
+        // Increment the startY to spread out the asteroids vertically
+        startY += Phaser.Math.Between(50, 150);  // Adjust the vertical spacing as necessary
     }
 }
 
