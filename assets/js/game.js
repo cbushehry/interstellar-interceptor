@@ -1,5 +1,5 @@
 // Define constants for game settings
-const LASER_SPEED = 400;
+const LASER_SPEED = 800;
 const PLAYER_SCALE = 1;
 const PLAYER_ACCEL = 10;
 const KEY_CONFIG = {
@@ -71,6 +71,9 @@ function create() {
         callbackScope: this,
         loop: true
     });
+
+    // Setup collision detection between lasers and asteroids
+    this.physics.add.collider(lasers, asteroids, onLaserHitAsteroid, null, this);
 }
 
 function update() {
@@ -128,6 +131,14 @@ function update() {
             asteroid.setVisible(false);
         }
     });
+
+     // Iterate over all asteroids to check their hit counts and destroy them if necessary
+     asteroids.getChildren().forEach(asteroid => {
+        if (asteroid.hitCount >= asteroid.maxHitCount) {
+            asteroid.setActive(false);
+            asteroid.setVisible(false);
+        }
+    });
 }
 
 function shootLaser() {
@@ -162,10 +173,28 @@ function spawnAsteroids() {
             // Set a velocity for the asteroid to make it move diagonally from top right to bottom left
             asteroid.body.velocity.x = Phaser.Math.Between(-125, -100);  // Narrow the velocity range for more clustering
             asteroid.body.velocity.y = Phaser.Math.Between(75, 100);     // Narrow the velocity range for more clustering
+
+            // Set the maximum hit count based on the asteroid type
+            asteroid.maxHitCount = asteroid.texture.key === 'asteroid1' ? 1 : 2;
+            asteroid.hitCount = 0;
         }
 
         // Increment the startY to spread out the asteroids vertically, but keep them relatively close to each other
         startY += Phaser.Math.Between(20, 40);  // Narrow the increment range for more clustering
+    }
+}
+
+function onLaserHitAsteroid(laser, asteroid) {
+    // Deactivate and hide the laser
+    laser.setActive(false);
+    laser.setVisible(false);
+
+    // Increase the hit count of the asteroid
+    if (asteroid.texture.key === 'asteroid2') {
+        asteroid.hitCount = (asteroid.hitCount || 0) + 1;
+    } else {
+        asteroid.setActive(false);
+        asteroid.setVisible(false);
     }
 }
 
