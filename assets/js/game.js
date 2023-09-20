@@ -52,7 +52,7 @@ function create() {
     // Create a group for lasers
     lasers = this.physics.add.group({
         classType: Phaser.Physics.Arcade.Image, // Setting class type to Arcade Image for performance benefits
-        maxSize: 10, // Set a maximum size for the group to limit the number of active laser objects
+        maxSize: 200, // Set a maximum size for the group to limit the number of active laser objects
     });
 
     // Setup input for shooting lasers using left mouse click
@@ -61,12 +61,12 @@ function create() {
     // Create a group for asteroids
     asteroids = this.physics.add.group({
         classType: Phaser.Physics.Arcade.Image,
-        maxSize: 50,  // Adjust the size as necessary
+        maxSize: 24,  // Adjust the size as necessary
     });
 
     // Schedule asteroid spawns using a timed event
     this.time.addEvent({
-        delay: 5000,  // Adjust the spawn delay as necessary
+        delay: 500,  // Adjust the spawn delay as necessary
         callback: spawnAsteroids,
         callbackScope: this,
         loop: true
@@ -169,18 +169,22 @@ function spawnAsteroids() {
             asteroid.setActive(true);
             asteroid.setVisible(true);
             asteroid.setScale(Phaser.Math.Between(0.5, 1));  // Vary the scale/size of asteroids
-            
+    
             // Set a velocity for the asteroid to make it move diagonally from top right to bottom left
-            asteroid.body.velocity.x = Phaser.Math.Between(-125, -100);  // Narrow the velocity range for more clustering
-            asteroid.body.velocity.y = Phaser.Math.Between(75, 100);     // Narrow the velocity range for more clustering
-
+            let velocityX = Phaser.Math.Between(-125, -100);  // Narrow the velocity range for more clustering
+            let velocityY = Phaser.Math.Between(75, 100);     // Narrow the velocity range for more clustering
+            asteroid.body.setVelocity(velocityX, velocityY);
+    
+            // Store the original velocities using setData
+            asteroid.setData('velocity', {x: velocityX, y: velocityY});
+    
             // Set the maximum hit count based on the asteroid type
             asteroid.maxHitCount = asteroid.texture.key === 'asteroid1' ? 1 : 2;
             asteroid.hitCount = 0;
         }
 
         // Increment the startY to spread out the asteroids vertically, but keep them relatively close to each other
-        startY += Phaser.Math.Between(20, 40);  // Narrow the increment range for more clustering
+        startY += Phaser.Math.Between(20, 30);  // Narrow the increment range for more clustering
     }
 }
 
@@ -190,12 +194,19 @@ function onLaserHitAsteroid(laser, asteroid) {
     laser.setVisible(false);
 
     // Increase the hit count of the asteroid
-    if (asteroid.texture.key === 'asteroid2') {
-        asteroid.hitCount = (asteroid.hitCount || 0) + 1;
-    } else {
-        asteroid.setActive(false);
-        asteroid.setVisible(false);
+    asteroid.hitCount = (asteroid.hitCount || 0) + 1;
+
+    // Check if the asteroid hit count is less than the maximum hit count
+    if (asteroid.hitCount < asteroid.maxHitCount) {
+        // Reset the velocity to the original velocity to maintain its course
+        let originalVelocity = asteroid.getData('velocity');
+        asteroid.body.setVelocity(originalVelocity.x, originalVelocity.y);
+        return;
     }
+
+    // If the asteroid hit count is equal to or greater than the maximum hit count, destroy it
+    asteroid.setActive(false);
+    asteroid.setVisible(false);
 }
 
 let config = {
