@@ -17,6 +17,7 @@ function preload() {
     this.load.image('playerShip1', 'assets/images/playerShip1.png');
     this.load.image('playerShip2', 'assets/images/playerShip2.png');
     this.load.image('laser1', 'assets/images/laser1.png');
+    this.load.image('heart', 'assets/images/heart.png');
 }
 
 function create() {
@@ -74,6 +75,18 @@ function create() {
 
     // Setup collision detection between lasers and asteroids
     this.physics.add.collider(lasers, asteroids, onLaserHitAsteroid, null, this);
+
+    // Initialize player health
+    this.playerHealth = 3;
+    this.hearts = this.add.group({
+        key: 'heart',
+        repeat: this.playerHealth - 1,
+        setXY: { x: 10, y: 10, stepX: 36 }
+    });
+
+    // Setup collision detection between player and asteroids
+    this.physics.add.collider(this.player, asteroids, onPlayerHitAsteroid, null, this);
+
 }
 
 function update() {
@@ -207,6 +220,26 @@ function onLaserHitAsteroid(laser, asteroid) {
     // If the asteroid hit count is equal to or greater than the maximum hit count, destroy it
     asteroid.setActive(false);
     asteroid.setVisible(false);
+}
+
+function onPlayerHitAsteroid(player, asteroid) {
+    // Reduce player health
+    this.playerHealth -= 1;
+
+    // Remove one heart sprite
+    let hearts = this.hearts.getChildren();
+    let heart = hearts[hearts.length - 1];
+    heart.destroy();
+
+    // Destroy the asteroid
+    asteroid.setActive(false);
+    asteroid.setVisible(false);
+
+    // Check if player health reaches zero
+    if (this.playerHealth <= 0) {
+        // Player dies, you can add code to handle player death (e.g., restart the game)
+        console.log('Game Over');
+    }
 }
 
 let config = {
