@@ -61,7 +61,7 @@ function create() {
     // Create a group for asteroids
     asteroids = this.physics.add.group({
         classType: Phaser.Physics.Arcade.Image,
-        maxSize: 20,  // Adjust the size as necessary
+        maxSize: 50,  // Adjust the size as necessary
     });
 
     // Schedule asteroid spawns using a timed event
@@ -145,15 +145,19 @@ function shootLaser() {
 
 function spawnAsteroids() {
     // Determine a starting Y coordinate within a smaller range to make the group more clustered
-    let startY = Phaser.Math.Between(game.scale.height * 0.08, game.scale.height * 0.24);
+    let startY = Phaser.Math.Between(game.scale.height * 0.1, game.scale.height * 0.3);
     
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < Phaser.Math.Between(4, 8); i++) {
+        // Randomly choose between the 'asteroid1' and 'asteroid2' sprites
+        let asteroidSprite = Phaser.Math.RND.pick(['asteroid1', 'asteroid2']);
+        
         // Get an inactive asteroid from the group or create a new one if none are available
-        let asteroid = asteroids.get(game.scale.width, startY, 'asteroid1');
+        let asteroid = asteroids.get(game.scale.width, startY, asteroidSprite);
+        
         if (asteroid) {
             asteroid.setActive(true);
             asteroid.setVisible(true);
-            asteroid.setScale(Phaser.Math.Between(0.6, 1.0));  // Vary the scale/size of asteroids
+            asteroid.setScale(Phaser.Math.Between(0.5, 1));  // Vary the scale/size of asteroids
             
             // Set a velocity for the asteroid to make it move diagonally from top right to bottom left
             asteroid.body.velocity.x = Phaser.Math.Between(-125, -100);  // Narrow the velocity range for more clustering
@@ -169,7 +173,7 @@ let config = {
     type: Phaser.AUTO,
     parent: 'game-container',
     scene: {
-        preload: preload,
+        preload: preload, 
         create: create,
         update: update,
         resize: resize,
