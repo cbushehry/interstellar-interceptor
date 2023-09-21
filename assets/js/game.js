@@ -101,18 +101,15 @@ function update() {
     if (controls.ACCELERATE.isDown) {
         this.player.setVelocityX(this.player.body.velocity.x + Math.cos(this.player.rotation) * PLAYER_ACCEL * 0.1);
         this.player.setVelocityY(this.player.body.velocity.y + Math.sin(this.player.rotation) * PLAYER_ACCEL * 0.1);
+    } else if (controls.DECELERATE.isDown) {
+        this.player.setVelocityX(this.player.body.velocity.x * 0.94);
+        this.player.setVelocityY(this.player.body.velocity.y * 0.94);
     } else {
         this.player.setVelocityX(this.player.body.velocity.x * 0.96);
         this.player.setVelocityY(this.player.body.velocity.y * 0.96);
     }
 
-    if (controls.DECELERATE.isDown) {
-        // Slow down the player gradually
-        this.player.setVelocityX(this.player.body.velocity.x * 0.94);
-        this.player.setVelocityY(this.player.body.velocity.y * 0.94);
-    }
-
-    // Implementing strafing: moving left and right relative to the direction the player ship is facing
+    // Implementing strafing
     if (controls.STRAFE_LEFT.isDown) {
         this.player.setVelocityX(this.player.body.velocity.x + Math.sin(this.player.rotation) * PLAYER_ACCEL * 0.1);
         this.player.setVelocityY(this.player.body.velocity.y - Math.cos(this.player.rotation) * PLAYER_ACCEL * 0.1);
@@ -124,12 +121,12 @@ function update() {
 
     // Introduce a velocity cap to prevent indefinite acceleration
     let speed = Math.sqrt(this.player.body.velocity.x ** 2 + this.player.body.velocity.y ** 2);
-    let maxSpeed = 100; // Adjust max speed as necessary
+    let maxSpeed = 100;
     if (speed > maxSpeed) {
         this.player.body.velocity.normalize().scale(maxSpeed);
     }
 
-    // Update lasers (e.g., remove lasers that move off-screen)
+    // Update lasers and asteroids
     lasers.getChildren().forEach(laser => {
         if (laser.x < 0 || laser.x > game.scale.width || laser.y < 0 || laser.y > game.scale.height) {
             laser.setActive(false);
@@ -137,16 +134,12 @@ function update() {
         }
     });
 
-    // Update asteroids (e.g., remove asteroids that move off-screen)
     asteroids.getChildren().forEach(asteroid => {
-        if (asteroid.x < 0 || asteroid.y > game.scale.height) {
+        if (asteroid.x < 0 || asteroid.x > game.scale.width || asteroid.y < 0 || asteroid.y > game.scale.height) {
             asteroid.setActive(false);
             asteroid.setVisible(false);
         }
-    });
 
-     // Iterate over all asteroids to check their hit counts and destroy them if necessary
-     asteroids.getChildren().forEach(asteroid => {
         if (asteroid.hitCount >= asteroid.maxHitCount) {
             asteroid.setActive(false);
             asteroid.setVisible(false);
