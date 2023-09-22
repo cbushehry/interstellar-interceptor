@@ -21,12 +21,8 @@ function preload() {
 }
 
 function create() {
-    this.bg = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'background').setOrigin(0);
-    this.bgStars = this.add.tileSprite(0, 0, game.scale.width, game.scale.height, 'background-stars').setOrigin(0);
-
-    // Initialize player sprite
-    this.player = this.physics.add.sprite(game.scale.width / 2, game.scale.height / 2, 'playerShip1');
-    this.player.setScale(PLAYER_SCALE);
+    this.bg = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'background').setOrigin(0);
+    this.bgStars = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'background-stars').setOrigin(0);
 
     // Setting up universal controls with WASD keys
     controls = {
@@ -35,6 +31,12 @@ function create() {
         STRAFE_LEFT: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.STRAFE_LEFT]),
         STRAFE_RIGHT: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.STRAFE_RIGHT])
     };
+
+    // Initialize player sprite
+    this.player = this.physics.add.sprite(this.scale.width / 2, this.scale.height / 2, 'playerShip1');
+    this.player.setScale(PLAYER_SCALE);
+    this.lastShotTime = 0;
+    this.doubleShot = false;
 
     // Creating an animation for the propelling fire effect
     this.anims.create({
@@ -62,8 +64,11 @@ function create() {
     // Create a group for asteroids
     asteroids = this.physics.add.group({
         classType: Phaser.Physics.Arcade.Image,
-        maxSize: 24,  // Adjust the size as necessary
+        maxSize: 48,  // Adjust the size as necessary
     });
+
+    // Setup collision detection between lasers and asteroids
+    this.physics.add.collider(lasers, asteroids, onLaserHitAsteroid, null, this);
 
     // Schedule asteroid spawns using a timed event
     this.time.addEvent({
@@ -73,9 +78,6 @@ function create() {
         loop: true
     });
 
-    // Setup collision detection between lasers and asteroids
-    this.physics.add.collider(lasers, asteroids, onLaserHitAsteroid, null, this);
-
     // Initialize player health
     this.playerHealth = 3;
     this.hearts = this.add.group({
@@ -83,10 +85,6 @@ function create() {
         repeat: this.playerHealth - 1,
         setXY: { x: 10, y: 10, stepX: 36 }
     });
-
-    // Setup collision detection between player and asteroids
-    this.physics.add.collider(this.player, asteroids, onPlayerHitAsteroid, null, this);
-
 }
 
 function update() {
@@ -148,14 +146,31 @@ function update() {
 }
 
 function shootLaser() {
-    // Get an inactive laser from the group or create a new one if none are available
+    // Get the current time
+    let currentTime = this.time.now;
+
+    // Check if enough time has passed since the last shot
+    if (currentTime - this.lastShotTime < 1000) {
+        // If in double-shot mode, allow firing
+        if (this.doubleShot) {
+            // Reset the double-shot flag to prevent immediate subsequent shots
+            this.doubleShot = false;
+        } else {
+            // If not in double-shot mode, exit the function without firing
+            return;
+        }
+    } else {
+        // If enough time has passed, enable the double-shot mode
+        this.doubleShot = true;
+        // Update the last shot time here for the first shot in a sequence
+        this.lastShotTime = currentTime;
+    }
+
+    // Existing laser shooting logic
     let laser = lasers.get(this.player.x, this.player.y, 'laser1');
-    
     if (laser) {
         laser.setActive(true);
         laser.setVisible(true);
-
-        // Set velocity of the laser to make it move in the direction the player is facing
         this.physics.velocityFromRotation(this.player.rotation, LASER_SPEED, laser.body.velocity);
     }
 }
@@ -215,26 +230,6 @@ function onLaserHitAsteroid(laser, asteroid) {
     asteroid.setVisible(false);
 }
 
-function onPlayerHitAsteroid(player, asteroid) {
-    // Reduce player health
-    this.playerHealth -= 1;
-
-    // Remove one heart sprite
-    let hearts = this.hearts.getChildren();
-    let heart = hearts[hearts.length - 1];
-    heart.destroy();
-
-    // Destroy the asteroid
-    asteroid.setActive(false);
-    asteroid.setVisible(false);
-
-    // Check if player health reaches zero
-    if (this.playerHealth <= 0) {
-        // Player dies, you can add code to handle player death (e.g., restart the game)
-        console.log('Game Over');
-    }
-}
-
 let config = {
     type: Phaser.AUTO,
     parent: 'game-container',
@@ -261,8 +256,11 @@ let config = {
         postBoot: function (game) {
             // Listen for window resize events
             window.addEventListener('resize', function () {
-                game.scale.resize(window.innerWidth, window.innerHeight);
-                game.scene.scenes[0].resize({ width: window.innerWidth, height: window.innerHeight });
+                clearTimeout(resizeTimer);
+                var resizeTimer = setTimeout(function() {
+                    game.scale.resize(window.innerWidth, window.innerHeight);
+                    game.scene.scenes[0].resize({ width: window.innerWidth, height: window.innerHeight });
+                }, 200);
             });
         }
     },
