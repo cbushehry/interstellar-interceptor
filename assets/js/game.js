@@ -36,7 +36,17 @@ function create() {
     this.player = this.physics.add.sprite(this.scale.width / 2, this.scale.height / 2, 'playerShip1');
     this.player.setScale(PLAYER_SCALE);
     this.lastShotTime = 0;
-    this.doubleShot = false;
+    this.isShooting = false;
+
+    // Set isShooting to true when the pointer is down
+    this.input.on('pointerdown', function () {
+        this.isShooting = true;
+    }, this);
+
+    // Set isShooting to false when the pointer is up
+    this.input.on('pointerup', function () {
+        this.isShooting = false;
+    }, this);
 
     // Creating an animation for the propelling fire effect
     this.anims.create({
@@ -132,6 +142,11 @@ function update() {
         }
     });
 
+    // Check if the player is holding down the shoot button
+    if (this.isShooting) {
+        shootLaser.call(this);
+    }
+
     asteroids.getChildren().forEach(asteroid => {
         if (asteroid.x < 0 || asteroid.x > game.scale.width || asteroid.y < 0 || asteroid.y > game.scale.height) {
             asteroid.setActive(false);
@@ -151,20 +166,12 @@ function shootLaser() {
 
     // Check if enough time has passed since the last shot
     if (currentTime - this.lastShotTime < 1000) {
-        // If in double-shot mode, allow firing
-        if (this.doubleShot) {
-            // Reset the double-shot flag to prevent immediate subsequent shots
-            this.doubleShot = false;
-        } else {
-            // If not in double-shot mode, exit the function without firing
-            return;
-        }
-    } else {
-        // If enough time has passed, enable the double-shot mode
-        this.doubleShot = true;
-        // Update the last shot time here for the first shot in a sequence
-        this.lastShotTime = currentTime;
+        // If not enough time has passed, exit the function without firing
+        return;
     }
+    
+    // Update the last shot time
+    this.lastShotTime = currentTime;
 
     // Existing laser shooting logic
     let laser = lasers.get(this.player.x, this.player.y, 'laser1');
