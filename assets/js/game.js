@@ -209,6 +209,11 @@ function spawnAsteroids() {
             // Set the maximum hit count based on the asteroid type
             asteroid.maxHitCount = asteroid.texture.key === 'asteroid1' ? 1 : 2;
             asteroid.hitCount = 0;
+
+            // Add a slight rotation to some asteroids
+            if (Phaser.Math.Between(0, 1)) {
+                asteroid.body.setAngularVelocity(Phaser.Math.Between(-90, 90)); // Adjust the range for more or less rotation
+            }
         }
 
         // Increment the startY to spread out the asteroids vertically, but keep them relatively close to each other
