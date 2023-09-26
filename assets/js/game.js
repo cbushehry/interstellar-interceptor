@@ -26,7 +26,6 @@ function preload() {
     this.load.image('explosion5', 'assets/images/explosion/explosion5.png');
     this.load.image('explosion6', 'assets/images/explosion/explosion6.png');
     this.load.image('explosion7', 'assets/images/explosion/explosion7.png');
-    
 }
 
 function create() {
@@ -44,6 +43,7 @@ function create() {
     // Initialize player sprite
     this.player = this.physics.add.sprite(this.scale.width / 2, this.scale.height / 2, 'playerShip1');
     this.player.setScale(PLAYER_SCALE);
+    this.input.on('pointerdown', shootLaser, this);
     this.lastShotTime = 0;
     this.isShooting = false;
 
@@ -74,41 +74,35 @@ function create() {
     // Create a group for lasers
     lasers = this.physics.add.group({
         classType: Phaser.Physics.Arcade.Image, // Setting class type to Arcade Image for performance benefits
-        maxSize: 200, // Set a maximum size for the group to limit the number of active laser objects
+        maxSize: 1000, // Set a maximum size for the group to limit the number of active laser objects
     });
-
-    // Setup input for shooting lasers using left mouse click
-    this.input.on('pointerdown', shootLaser, this);
 
     // Create a group for asteroids
     asteroids = this.physics.add.group({
         classType: Phaser.Physics.Arcade.Image,
-        maxSize: 48,  // Adjust the size as necessary
+        maxSize: 164,  // Adjust the size as necessary
     });
 
-    // Setup collision detection between lasers and asteroids
+    // Setup collision detection between lasers and asteroids with explosion animation
     this.physics.add.collider(lasers, asteroids, onLaserHitAsteroid, null, this);
+    this.anims.create({
+        key: 'explode',
+        frames: [
+            { key: 'explosion1' },
+            { key: 'explosion2' },
+            { key: 'explosion3' },
+            { key: 'explosion4' },
+            { key: 'explosion5' },
+            { key: 'explosion6' },
+            { key: 'explosion7' }
+        ],
+        frameRate: 20,
+        repeat: 0,
+        hideOnComplete: true
+    });
 
-        // Creating an animation for the asteroid explosion
-        this.anims.create({
-            key: 'explode',
-            frames: [
-                { key: 'explosion1' },
-                { key: 'explosion2' },
-                { key: 'explosion3' },
-                { key: 'explosion4' },
-                { key: 'explosion5' },
-                { key: 'explosion6' },
-                { key: 'explosion7' }
-            ],
-            frameRate: 20,
-            repeat: 0,
-            hideOnComplete: true
-        });
-
-    // Schedule asteroid spawns using a timed event
     this.time.addEvent({
-        delay: 500,  // Adjust the spawn delay as necessary
+        delay: 2000,  // 10 seconds
         callback: spawnAsteroids,
         callbackScope: this,
         loop: true
@@ -124,12 +118,14 @@ function create() {
 }
 
 function update() {
-    // Getting the angle between the player and the pointer
     var pointer = this.input.activePointer;
     var angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, pointer.x, pointer.y);
-
-    // Smoothly rotate the player's ship towards the pointer over time
     this.player.rotation = Phaser.Math.Angle.RotateTo(this.player.rotation, angle, 0.04);
+
+        // Check if the player is holding down the shoot button
+        if (this.isShooting) {
+            shootLaser.call(this);
+        }
 
     // Calculate velocity based on the player's rotation
     if (controls.ACCELERATE.isDown) {
@@ -168,20 +164,19 @@ function update() {
         }
     });
 
-    // Check if the player is holding down the shoot button
-    if (this.isShooting) {
-        shootLaser.call(this);
-    }
-
     asteroids.getChildren().forEach(asteroid => {
-        if (asteroid.x < 0 || asteroid.x > game.scale.width || asteroid.y < 0 || asteroid.y > game.scale.height) {
-            asteroid.setActive(false);
-            asteroid.setVisible(false);
-        }
-
-        if (asteroid.hitCount >= asteroid.maxHitCount) {
-            asteroid.setActive(false);
-            asteroid.setVisible(false);
+        if (asteroid.active) {
+            // Retrieve the initial position of the asteroid
+            const initialPosition = asteroid.getData('initialPosition');
+    
+            // Calculate the distance traveled by the asteroid from its initial position
+            const distanceTraveled = Phaser.Math.Distance.Between(initialPosition.x, initialPosition.y, asteroid.x, asteroid.y);
+    
+            // Check if the distance traveled exceeds the threshold, for example, 500 units
+            if (distanceTraveled > 3200) {
+                asteroid.setActive(false);
+                asteroid.setVisible(false);
+            }
         }
     });
 }
@@ -191,7 +186,7 @@ function shootLaser() {
     let currentTime = this.time.now;
 
     // Check if enough time has passed since the last shot
-    if (currentTime - this.lastShotTime < 1000) {
+    if (currentTime - this.lastShotTime < 400) {
         // If not enough time has passed, exit the function without firing
         return;
     }
@@ -209,41 +204,44 @@ function shootLaser() {
 }
 
 function spawnAsteroids() {
-    // Determine a starting Y coordinate within a smaller range to make the group more clustered
-    let startY = Phaser.Math.Between(game.scale.height * 0.1, game.scale.height * 0.3);
-    
-    for (let i = 0; i < Phaser.Math.Between(4, 8); i++) {
-        // Randomly choose between the 'asteroid1' and 'asteroid2' sprites
-        let asteroidSprite = Phaser.Math.RND.pick(['asteroid1', 'asteroid2']);
-        
-        // Get an inactive asteroid from the group or create a new one if none are available
-        let asteroid = asteroids.get(game.scale.width, startY, asteroidSprite);
-        
-        if (asteroid) {
-            asteroid.setActive(true);
-            asteroid.setVisible(true);
-            asteroid.setScale(Phaser.Math.Between(0.5, 1));  // Vary the scale/size of asteroids
-    
-            // Set a velocity for the asteroid to make it move diagonally from top right to bottom left
-            let velocityX = Phaser.Math.Between(-125, -100);  // Narrow the velocity range for more clustering
-            let velocityY = Phaser.Math.Between(75, 100);     // Narrow the velocity range for more clustering
-            asteroid.body.setVelocity(velocityX, velocityY);
-    
-            // Store the original velocities using setData
-            asteroid.setData('velocity', {x: velocityX, y: velocityY});
-    
-            // Set the maximum hit count based on the asteroid type
-            asteroid.maxHitCount = asteroid.texture.key === 'asteroid1' ? 1 : 2;
-            asteroid.hitCount = 0;
+    let asteroidSprite = Phaser.Math.RND.pick(['asteroid1', 'asteroid2']);
 
-            // Add a slight rotation to some asteroids
-            if (Phaser.Math.Between(0, 1)) {
-                asteroid.body.setAngularVelocity(Phaser.Math.Between(-90, 90)); // Adjust the range for more or less rotation
-            }
+    // Define the radius of the invisible circle around the player
+    let radius = 2400;
+
+    // Generate a random angle in radians
+    let randomAngle = Phaser.Math.FloatBetween(0, 2 * Math.PI);
+
+    // Calculate the spawn position on the invisible circle around the player
+    let x = this.player.x + Math.cos(randomAngle) * radius;
+    let y = this.player.y + Math.sin(randomAngle) * radius;
+
+    // Get an inactive asteroid from the group or create a new one if none are available
+    let asteroid = asteroids.get(x, y, asteroidSprite);
+
+    if (asteroid) {
+        asteroid.setActive(true);
+        asteroid.setVisible(true);
+        asteroid.setScale(Phaser.Math.Between(3, 4)); // Set the scale/size of asteroid between 3x to 4x
+
+        // Calculate the velocity to make the asteroid move towards the playerShip
+        let velocityX = (this.player.x - x) * 0.07; // Increase the speed factor for faster movement
+        let velocityY = (this.player.y - y) * 0.07;
+
+        asteroid.body.setVelocity(velocityX, velocityY);
+
+        // Store the original velocities and initial position using setData
+        asteroid.setData('velocity', {x: velocityX, y: velocityY});
+        asteroid.setData('initialPosition', {x: x, y: y});
+
+        // Set the maximum hit count for all asteroids to 10
+        asteroid.maxHitCount = 4;
+        asteroid.hitCount = 0;
+
+        // Add a slight rotation to the asteroid
+        if (Phaser.Math.Between(0, 1)) {
+            asteroid.body.setAngularVelocity(Phaser.Math.Between(-120, 120)); // Adjust the range for more or less rotation
         }
-
-        // Increment the startY to spread out the asteroids vertically, but keep them relatively close to each other
-        startY += Phaser.Math.Between(20, 30);  // Narrow the increment range for more clustering
     }
 }
 
@@ -251,6 +249,10 @@ function onLaserHitAsteroid(laser, asteroid) {
     // Deactivate and hide the laser
     laser.setActive(false);
     laser.setVisible(false);
+    
+    // Move the laser off-screen
+    laser.x = -10;
+    laser.y = -10;
 
     // Increase the hit count of the asteroid
     asteroid.hitCount = (asteroid.hitCount || 0) + 1;
@@ -269,6 +271,10 @@ function onLaserHitAsteroid(laser, asteroid) {
 
     // Create and play the explosion animation at the asteroid's position
     let explosion = this.add.sprite(asteroid.x, asteroid.y, 'explosion1');
+    
+    // Set the scale of the explosion to match the scale of the asteroid
+    explosion.setScale(asteroid.scaleX, asteroid.scaleY);
+    
     explosion.play('explode');
 }
 
