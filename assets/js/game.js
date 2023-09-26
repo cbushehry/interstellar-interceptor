@@ -1,7 +1,7 @@
 // Define constants for game settings
-const LASER_SPEED = 800;
+const LASER_SPEED = 999;
 const PLAYER_SCALE = 1;
-const PLAYER_ACCEL = 10;
+const PLAYER_ACCEL = 30;
 const KEY_CONFIG = {
     ACCELERATE: 'W',
     DECELERATE: 'S',
@@ -80,7 +80,7 @@ function create() {
     // Create a group for asteroids
     asteroids = this.physics.add.group({
         classType: Phaser.Physics.Arcade.Image,
-        maxSize: 164,  // Adjust the size as necessary
+        maxSize: 82,  // Adjust the size as necessary
     });
 
     // Setup collision detection between lasers and asteroids with explosion animation
@@ -102,14 +102,14 @@ function create() {
     });
 
     this.time.addEvent({
-        delay: 2000,  // 10 seconds
+        delay: 3000,  // 10 seconds
         callback: spawnAsteroids,
         callbackScope: this,
         loop: true
     });
 
     // Initialize player health
-    this.playerHealth = 3;
+    this.playerHealth = 5;
     this.hearts = this.add.group({
         key: 'heart',
         repeat: this.playerHealth - 1,
@@ -173,7 +173,7 @@ function update() {
             const distanceTraveled = Phaser.Math.Distance.Between(initialPosition.x, initialPosition.y, asteroid.x, asteroid.y);
     
             // Check if the distance traveled exceeds the threshold, for example, 500 units
-            if (distanceTraveled > 3200) {
+            if (distanceTraveled > 4800) {
                 asteroid.setActive(false);
                 asteroid.setVisible(false);
             }
@@ -186,7 +186,7 @@ function shootLaser() {
     let currentTime = this.time.now;
 
     // Check if enough time has passed since the last shot
-    if (currentTime - this.lastShotTime < 400) {
+    if (currentTime - this.lastShotTime < 500) {
         // If not enough time has passed, exit the function without firing
         return;
     }
@@ -222,11 +222,17 @@ function spawnAsteroids() {
     if (asteroid) {
         asteroid.setActive(true);
         asteroid.setVisible(true);
-        asteroid.setScale(Phaser.Math.Between(3, 4)); // Set the scale/size of asteroid between 3x to 4x
+
+        // Set the scale/size of asteroid between 2x to 4x
+        let scale = Phaser.Math.Between(2, 4);
+        asteroid.setScale(scale);
+
+        // Calculate the speed factor based on the size of the asteroid
+        let speedFactor = Phaser.Math.Linear(0.12, 0.03, (scale - 2) / (4 - 2));
 
         // Calculate the velocity to make the asteroid move towards the playerShip
-        let velocityX = (this.player.x - x) * 0.07; // Increase the speed factor for faster movement
-        let velocityY = (this.player.y - y) * 0.07;
+        let velocityX = (this.player.x - x) * speedFactor;
+        let velocityY = (this.player.y - y) * speedFactor;
 
         asteroid.body.setVelocity(velocityX, velocityY);
 
@@ -234,8 +240,8 @@ function spawnAsteroids() {
         asteroid.setData('velocity', {x: velocityX, y: velocityY});
         asteroid.setData('initialPosition', {x: x, y: y});
 
-        // Set the maximum hit count for all asteroids to 10
-        asteroid.maxHitCount = 4;
+        // Set the maximum hit count for all asteroids based on their scale
+        asteroid.maxHitCount = scale <= 3 ? 3 : 4;
         asteroid.hitCount = 0;
 
         // Add a slight rotation to the asteroid
