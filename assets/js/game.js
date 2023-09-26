@@ -102,14 +102,14 @@ function create() {
     });
 
     this.time.addEvent({
-        delay: 3000,  // 3 seconds
+        delay: 2000,  // 3 seconds
         callback: spawnAsteroids,
         callbackScope: this,
         loop: true
     });
 
     this.time.addEvent({
-        delay: 9000, // 9 seconds
+        delay: 6000, // 9 seconds
         callback: spawnAsteroidClusters,
         callbackScope: this,
         loop: true
@@ -260,7 +260,7 @@ function spawnAsteroids() {
 
 function spawnAsteroidClusters() {
     // Number of asteroids in a cluster
-    let clusterSize = Phaser.Math.Between(18, 36);
+    let clusterSize = Phaser.Math.Between(16, 32);
 
     // Define the initial spawn position slightly off screen to the top right
     let startX = this.game.config.width + 100;
@@ -272,8 +272,8 @@ function spawnAsteroidClusters() {
 
     for (let i = 0; i < clusterSize; i++) {
         // Adjusting the spawn position for each asteroid in the cluster
-        let x = startX + Phaser.Math.Between(-50, 50);
-        let y = startY + Phaser.Math.Between(-50, 50);
+        let x = startX + Phaser.Math.Between(-80, 80);
+        let y = startY + Phaser.Math.Between(-80, 80);
 
         let asteroidSprite = Phaser.Math.RND.pick(['asteroid1', 'asteroid2']);
         let asteroid = asteroids.get(x, y, asteroidSprite);
