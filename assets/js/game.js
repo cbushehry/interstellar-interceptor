@@ -1,7 +1,10 @@
 // Define constants for game settings
-const LASER_SPEED = 999;
-const PLAYER_SCALE = 1;
-const PLAYER_ACCEL = 30;
+const PLAYER_SCALE = 1.2;
+const PLAYER_ACCEL = 10;
+const LASER_SPEED = 1111;
+const scoreElement = document.getElementById('score');
+let playerScore = 0;
+
 const KEY_CONFIG = {
     ACCELERATE: 'W',
     DECELERATE: 'S',
@@ -102,25 +105,31 @@ function create() {
     });
 
     this.time.addEvent({
-        delay: 2000,  // 3 seconds
+        delay: 1000,  // 3 seconds
         callback: spawnAsteroids,
         callbackScope: this,
         loop: true
     });
 
     this.time.addEvent({
-        delay: 6000, // 9 seconds
+        delay: 2000, // 9 seconds
         callback: spawnAsteroidClusters,
         callbackScope: this,
         loop: true
     });
 
     // Initialize player health
-    this.playerHealth = 5;
+    this.playerHealth = 3;
     this.hearts = this.add.group({
         key: 'heart',
         repeat: this.playerHealth - 1,
-        setXY: { x: 10, y: 10, stepX: 36 }
+        setXY: { x: 20, y: 20, stepX: 36 }
+    });
+
+    // Set the scale of each heart in the group
+    let scaleValue = 2; // Set this to whatever scale you desire
+    this.hearts.getChildren().forEach(heart => {
+        heart.setScale(scaleValue);
     });
 }
 
@@ -272,8 +281,8 @@ function spawnAsteroidClusters() {
 
     for (let i = 0; i < clusterSize; i++) {
         // Adjusting the spawn position for each asteroid in the cluster
-        let x = startX + Phaser.Math.Between(-80, 80);
-        let y = startY + Phaser.Math.Between(-80, 80);
+        let x = startX + Phaser.Math.Between(-100, 100);
+        let y = startY + Phaser.Math.Between(-100, 100);
 
         let asteroidSprite = Phaser.Math.RND.pick(['asteroid1', 'asteroid2']);
         let asteroid = asteroids.get(x, y, asteroidSprite);
@@ -327,6 +336,12 @@ function onLaserHitAsteroid(laser, asteroid) {
     // If the asteroid hit count is equal to or greater than the maximum hit count, destroy it
     asteroid.setActive(false);
     asteroid.setVisible(false);
+
+    // Increase the player score
+    playerScore += 1;
+    
+    // Update the scoreElement text
+    scoreElement.innerText = playerScore;
 
     // Create and play the explosion animation at the asteroid's position
     let explosion = this.add.sprite(asteroid.x, asteroid.y, 'explosion1');
