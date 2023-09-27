@@ -64,7 +64,7 @@ function create() {
     // Create a group for asteroids
     asteroids = this.physics.add.group({
         classType: Phaser.Physics.Arcade.Image,
-        maxSize: 256,  // Adjust the size as necessary
+        maxSize: 512,  // Adjust the size as necessary
     });
 
     // Setup collision detection between lasers and asteroids with explosion animation
@@ -86,14 +86,14 @@ function create() {
     });
 
     this.time.addEvent({
-        delay: 1000,  // 3 seconds
+        delay: 3000,  // 3 seconds
         callback: spawnAsteroids,
         callbackScope: this,
         loop: true
     });
 
     this.time.addEvent({
-        delay: 2000, // 9 seconds
+        delay: 9000, // 9 seconds
         callback: spawnAsteroidClusters,
         callbackScope: this,
         loop: true
@@ -148,7 +148,7 @@ function update() {
 
     // Introduce a velocity cap to prevent indefinite acceleration
     let speed = Math.sqrt(this.player.body.velocity.x ** 2 + this.player.body.velocity.y ** 2);
-    let maxSpeed = 100;
+    let maxSpeed = 80;
     if (speed > maxSpeed) {
         this.player.body.velocity.normalize().scale(maxSpeed);
     }
@@ -225,7 +225,7 @@ function spawnAsteroids() {
         asteroid.setScale(scale);
 
         // Calculate the speed factor based on the size of the asteroid
-        let speedFactor = Phaser.Math.Linear(0.12, 0.03, (scale - 2) / (4 - 2));
+        let speedFactor = Phaser.Math.Linear(0.10, 0.05, (scale - 2) / (4 - 2));
 
         // Calculate the velocity to make the asteroid move towards the playerShip
         let velocityX = (this.player.x - x) * speedFactor;
@@ -257,8 +257,8 @@ function spawnAsteroidClusters() {
     let startY = -50;
 
     // Velocity towards bottom left of the screen
-    let velocityX = -Phaser.Math.Between(60, 70);
-    let velocityY = Phaser.Math.Between(80, 90);
+    let velocityX = -Phaser.Math.Between(100, 120);
+    let velocityY = Phaser.Math.Between(60, 70);
 
     for (let i = 0; i < clusterSize; i++) {
         // Adjusting the spawn position for each asteroid in the cluster
