@@ -30,6 +30,7 @@ function create() {
     this.input.on('pointerdown', shootLaser, this);
     this.lastShotTime = 0;
     this.isShooting = false;
+    this.player.setData('isInvincible', false);
 
     // Set isShooting to true when the pointer is down
     this.input.on('pointerdown', function () {
@@ -69,6 +70,7 @@ function create() {
 
     // Setup collision detection between lasers and asteroids with explosion animation
     this.physics.add.collider(lasers, asteroids, onLaserHitAsteroid, null, this);
+    this.physics.add.collider(this.player, asteroids, playerShipHitAsteroid, null, this);
     this.anims.create({
         key: 'explode',
         frames: [
@@ -331,6 +333,40 @@ function onLaserHitAsteroid(laser, asteroid) {
     explosion.setScale(asteroid.scaleX, asteroid.scaleY);
     
     explosion.play('explode');
+}
+
+function playerShipHitAsteroid(player, asteroid) {
+    // Check if player is invincible
+    if (player.getData('isInvincible')) {
+        return;
+    }
+    
+    // Make the player invincible
+    player.setData('isInvincible', true);
+    this.time.addEvent({
+        delay: 3000, // 3 seconds
+        callback: function () {
+            player.setData('isInvincible', false);
+        },
+        callbackScope: this
+    });
+
+    // Handle the asteroid explosion and player losing a heart
+    asteroid.setActive(false);
+    asteroid.setVisible(false);
+    let explosion = this.add.sprite(asteroid.x, asteroid.y, 'explosion1');
+    explosion.setScale(asteroid.scaleX, asteroid.scaleY);
+    explosion.play('explode');
+
+    // Update the player's health
+    this.playerHealth -= 1;
+    this.hearts.getChildren()[this.playerHealth].setVisible(false); // Hide one heart
+    
+    // Check if player is out of hearts
+    if (this.playerHealth === 0) {
+        window.alert("GAME OVER! " + "SCORE = " + playerScore);
+        this.scene.restart();
+    }
 }
 
 let config = {
