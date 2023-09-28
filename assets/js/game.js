@@ -68,9 +68,10 @@ function create() {
         maxSize: 512,  // Adjust the size as necessary
     });
 
-    // Setup collision detection between lasers and asteroids with explosion animation
-    this.physics.add.collider(lasers, asteroids, onLaserHitAsteroid, null, this);
+    // Setup collision detection between lasers and asteroids and playerShip with explosion animation
+    this.physics.add.collider(asteroids, asteroids, asteroidHitAsteroid, null, this);
     this.physics.add.collider(this.player, asteroids, playerShipHitAsteroid, null, this);
+    this.physics.add.collider(lasers, asteroids, onLaserHitAsteroid, null, this);
     this.anims.create({
         key: 'explode',
         frames: [
@@ -296,6 +297,92 @@ function spawnAsteroidClusters() {
     }
 }
 
+function asteroidHitAsteroid(asteroid1, asteroid2) {
+    // Compare the scales of the two asteroids
+    if (asteroid1.scaleX === asteroid2.scaleX) {
+        // If scales are the same, asteroids just bounce off each other,
+        // so we just update their velocities to simulate a bounce.
+        
+        // Here you may need to add the bouncing logic depending on your specific requirements.
+        // For simplicity, you can swap their velocities.
+        let tempVelocity = asteroid1.body.velocity.clone();
+        asteroid1.body.setVelocity(asteroid2.body.velocity.x, asteroid2.body.velocity.y);
+        asteroid2.body.setVelocity(tempVelocity.x, tempVelocity.y);
+    } else {
+        // If scales are different, the smaller asteroid explodes.
+        let smallerAsteroid, largerAsteroid;
+        
+        if (asteroid1.scaleX < asteroid2.scaleX) {
+            smallerAsteroid = asteroid1;
+            largerAsteroid = asteroid2;
+        } else {
+            smallerAsteroid = asteroid2;
+            largerAsteroid = asteroid1;
+        }
+        
+        // Handle the explosion of the smaller asteroid
+        smallerAsteroid.setActive(false);
+        smallerAsteroid.setVisible(false);
+        
+        let explosion = this.add.sprite(smallerAsteroid.x, smallerAsteroid.y, 'explosion1');
+        explosion.setScale(smallerAsteroid.scaleX, smallerAsteroid.scaleY);
+        explosion.play('explode');
+    }
+}
+
+function playerShipHitAsteroid(player, asteroid) {
+    // Check if player is invincible
+    if (player.getData('isInvincible')) {
+        return;
+    }
+
+    // Make the player invincible
+    player.setData('isInvincible', true);
+    
+    // Setup blinking effect
+    let blinkCount = 0;
+    let blinkEvent = this.time.addEvent({
+        delay: 300, // 5 blinks within 3 seconds, so 3000ms/10 = 300ms for each on/off
+        callback: function () {
+            player.setVisible(!player.visible);
+            blinkCount++;
+            if (blinkCount >= 10) { // 5 on/off blinks
+                blinkEvent.remove(); // Stop the blinking
+                player.setVisible(true); // Ensure player is visible at the end
+            }
+        },
+        callbackScope: this,
+        repeat: 9 // since it runs once by default, we repeat 9 more times for a total of 10 toggles
+    });
+
+    // Set a timer to remove invincibility after 3 seconds
+    this.time.addEvent({
+        delay: 3000, // 3 seconds
+        callback: function () {
+            player.setData('isInvincible', false);
+        },
+        callbackScope: this
+    });
+
+    // Handle the asteroid explosion and player losing a heart
+    asteroid.setActive(false);
+    asteroid.setVisible(false);
+    let explosion = this.add.sprite(asteroid.x, asteroid.y, 'explosion1');
+    explosion.setScale(asteroid.scaleX, asteroid.scaleY);
+    explosion.play('explode');
+
+    // Update the player's health
+    this.playerHealth -= 1;
+    this.hearts.getChildren()[this.playerHealth].setVisible(false); // Hide one heart
+    
+    // Check if player is out of hearts
+    if (this.playerHealth === 0) {
+        window.alert("GAME OVER! " + "SCORE = " + playerScore);
+        playerScore = 0; // Reset the playerScore
+        this.scene.restart();
+    }
+}
+
 function onLaserHitAsteroid(laser, asteroid) {
     // Deactivate and hide the laser
     laser.setActive(false);
@@ -333,40 +420,6 @@ function onLaserHitAsteroid(laser, asteroid) {
     explosion.setScale(asteroid.scaleX, asteroid.scaleY);
     
     explosion.play('explode');
-}
-
-function playerShipHitAsteroid(player, asteroid) {
-    // Check if player is invincible
-    if (player.getData('isInvincible')) {
-        return;
-    }
-    
-    // Make the player invincible
-    player.setData('isInvincible', true);
-    this.time.addEvent({
-        delay: 3000, // 3 seconds
-        callback: function () {
-            player.setData('isInvincible', false);
-        },
-        callbackScope: this
-    });
-
-    // Handle the asteroid explosion and player losing a heart
-    asteroid.setActive(false);
-    asteroid.setVisible(false);
-    let explosion = this.add.sprite(asteroid.x, asteroid.y, 'explosion1');
-    explosion.setScale(asteroid.scaleX, asteroid.scaleY);
-    explosion.play('explode');
-
-    // Update the player's health
-    this.playerHealth -= 1;
-    this.hearts.getChildren()[this.playerHealth].setVisible(false); // Hide one heart
-    
-    // Check if player is out of hearts
-    if (this.playerHealth === 0) {
-        window.alert("GAME OVER! " + "SCORE = " + playerScore);
-        this.scene.restart();
-    }
 }
 
 let config = {
