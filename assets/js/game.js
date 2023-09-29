@@ -89,14 +89,14 @@ function create() {
     });
 
     this.time.addEvent({
-        delay: 3000,  // 3 seconds
+        delay: 5000,  // 3 seconds
         callback: spawnAsteroids,
         callbackScope: this,
         loop: true
     });
 
     this.time.addEvent({
-        delay: 9000, // 9 seconds
+        delay: 15000, // 9 seconds
         callback: spawnAsteroidClusters,
         callbackScope: this,
         loop: true
@@ -199,6 +199,7 @@ function shootLaser() {
     if (laser) {
         laser.setActive(true);
         laser.setVisible(true);
+        laser.setScale(1.3);
         this.physics.velocityFromRotation(this.player.rotation, LASER_SPEED, laser.body.velocity);
     }
 }
@@ -300,14 +301,13 @@ function spawnAsteroidClusters() {
 function asteroidHitAsteroid(asteroid1, asteroid2) {
     // Compare the scales of the two asteroids
     if (asteroid1.scaleX === asteroid2.scaleX) {
-        // If scales are the same, asteroids just bounce off each other,
-        // so we just update their velocities to simulate a bounce.
+        // If scales are the same, both asteroids slow down in velocity.
         
-        // Here you may need to add the bouncing logic depending on your specific requirements.
-        // For simplicity, you can swap their velocities.
-        let tempVelocity = asteroid1.body.velocity.clone();
-        asteroid1.body.setVelocity(asteroid2.body.velocity.x, asteroid2.body.velocity.y);
-        asteroid2.body.setVelocity(tempVelocity.x, tempVelocity.y);
+        let dampingFactor = 0.9; // You can adjust this value
+        
+        // Adjust the velocities of both asteroids
+        asteroid1.body.setVelocity(asteroid1.body.velocity.x * dampingFactor, asteroid1.body.velocity.y * dampingFactor);
+        asteroid2.body.setVelocity(asteroid2.body.velocity.x * dampingFactor, asteroid2.body.velocity.y * dampingFactor);
     } else {
         // If scales are different, the smaller asteroid explodes.
         let smallerAsteroid, largerAsteroid;
