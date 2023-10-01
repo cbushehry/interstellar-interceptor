@@ -151,7 +151,7 @@ function update() {
 
     // Introduce a velocity cap to prevent indefinite acceleration
     let speed = Math.sqrt(this.player.body.velocity.x ** 2 + this.player.body.velocity.y ** 2);
-    let maxSpeed = 80;
+    let maxSpeed = 100;
     if (speed > maxSpeed) {
         this.player.body.velocity.normalize().scale(maxSpeed);
     }
@@ -199,7 +199,7 @@ function shootLaser() {
     if (laser) {
         laser.setActive(true);
         laser.setVisible(true);
-        laser.setScale(1.3);
+        laser.setScale(1.2);
         this.physics.velocityFromRotation(this.player.rotation, LASER_SPEED, laser.body.velocity);
     }
 }
@@ -254,7 +254,7 @@ function spawnAsteroids() {
 
 function spawnAsteroidClusters() {
     // Number of asteroids in a cluster
-    let clusterSize = Phaser.Math.Between(16, 32);
+    let clusterSize = Phaser.Math.Between(32, 32);
 
     // Define the initial spawn position slightly off screen to the top right
     let startX = this.game.config.width + 100;
@@ -266,8 +266,8 @@ function spawnAsteroidClusters() {
 
     for (let i = 0; i < clusterSize; i++) {
         // Adjusting the spawn position for each asteroid in the cluster
-        let x = startX + Phaser.Math.Between(-100, 100);
-        let y = startY + Phaser.Math.Between(-100, 100);
+        let x = startX + Phaser.Math.Between(-200, 200);
+        let y = startY + Phaser.Math.Between(-200, 200);
 
         let asteroidSprite = Phaser.Math.RND.pick(['asteroid1', 'asteroid2']);
         let asteroid = asteroids.get(x, y, asteroidSprite);
