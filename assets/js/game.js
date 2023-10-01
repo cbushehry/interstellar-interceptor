@@ -79,7 +79,7 @@ function create() {
     });
 
     this.time.addEvent({
-        delay: 4000,
+        delay: 3000,
         callback: spawnAsteroids,
         callbackScope: this,
         loop: true
@@ -120,11 +120,11 @@ function update() {
         this.player.setVelocityX(this.player.body.velocity.x + Math.cos(this.player.rotation) * PLAYER_ACCEL * 0.1);
         this.player.setVelocityY(this.player.body.velocity.y + Math.sin(this.player.rotation) * PLAYER_ACCEL * 0.1);
     } else if (controls.DECELERATE.isDown) {
-        this.player.setVelocityX(this.player.body.velocity.x * 0.94);
-        this.player.setVelocityY(this.player.body.velocity.y * 0.94);
+        this.player.setVelocityX(this.player.body.velocity.x * 0.99);
+        this.player.setVelocityY(this.player.body.velocity.y * 0.99);
     } else {
-        this.player.setVelocityX(this.player.body.velocity.x * 0.96);
-        this.player.setVelocityY(this.player.body.velocity.y * 0.96);
+        this.player.setVelocityX(this.player.body.velocity.x * 0.99);
+        this.player.setVelocityY(this.player.body.velocity.y * 0.99);
     }
 
     if (controls.STRAFE_LEFT.isDown) {
@@ -172,11 +172,11 @@ function shootLaser() {
 
     this.lastShotTime = currentTime;
 
-    let laser = lasers.get(this.player.x, this.player.y, 'laser1');
+    let laser = lasers.get(this.player.x, this.player.y, 'laser4');
     if (laser) {
         laser.setActive(true);
         laser.setVisible(true);
-        laser.setScale(1.2);
+        laser.setScale(1);
         this.physics.velocityFromRotation(this.player.rotation, LASER_SPEED, laser.body.velocity);
     }
 }
@@ -272,7 +272,7 @@ function spawnAsteroidClusters() {
 function asteroidHitAsteroid(asteroid1, asteroid2) {
     if (asteroid1.scaleX === asteroid2.scaleX) {
         
-        let dampingFactor = 0.93;
+        let dampingFactor = 0.987;
 
         asteroid1.body.setVelocity(asteroid1.body.velocity.x * dampingFactor, asteroid1.body.velocity.y * dampingFactor);
         asteroid2.body.setVelocity(asteroid2.body.velocity.x * dampingFactor, asteroid2.body.velocity.y * dampingFactor);

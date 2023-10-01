@@ -7,9 +7,9 @@ function preload() {
     this.load.image('heart', 'assets/images/heart.png');
 
     this.load.image('laser1', 'assets/images/lasers/laser1.png');
-    this.load.image('laser1', 'assets/images/lasers/laser2.png');
-    this.load.image('laser1', 'assets/images/lasers/laser3.png');
-    this.load.image('laser1', 'assets/images/lasers/laser4.png');
+    this.load.image('laser2', 'assets/images/lasers/laser2.png');
+    this.load.image('laser3', 'assets/images/lasers/laser3.png');
+    this.load.image('laser4', 'assets/images/lasers/laser4.png');
 
     this.load.image('asteroid1', 'assets/images/asteroid1.png');
     this.load.image('asteroid2', 'assets/images/asteroid2.png');
