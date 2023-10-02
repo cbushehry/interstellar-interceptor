@@ -7,7 +7,17 @@ body, html {
 #score {
     position: fixed;
     top: 10px;
-    right: 10px;
+    right: 15px;
+    font-size: 34px;
+    color: #f7fa54;
+}
+
+#timer {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translate(-50%, -50%);
     font-size: 30px;
-    color: #fff;
+    color: white;
+    z-index: 10; /* This ensures the timer displays above other elements on the map. Adjust as needed. */
 }

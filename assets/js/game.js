@@ -8,7 +8,8 @@ const KEY_CONFIG = {
     ACCELERATE: 'W',
     DECELERATE: 'S',
     STRAFE_LEFT: 'A',
-    STRAFE_RIGHT: 'D'
+    STRAFE_RIGHT: 'D',
+    SHIELD: ' '
 };
 
 function create() {
@@ -19,7 +20,8 @@ function create() {
         ACCELERATE: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.ACCELERATE]),
         DECELERATE: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.DECELERATE]),
         STRAFE_LEFT: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.STRAFE_LEFT]),
-        STRAFE_RIGHT: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.STRAFE_RIGHT])
+        STRAFE_RIGHT: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.STRAFE_RIGHT]),
+        SHIELD: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.SHIELD])
     };
 
     this.player = this.physics.add.sprite(this.scale.width / 2, this.scale.height / 2, 'playerShip1');
@@ -92,7 +94,6 @@ function create() {
         loop: true
     });
 
-
     this.playerHealth = 3;
     this.hearts = this.add.group({
         key: 'heart',
@@ -100,10 +101,18 @@ function create() {
         setXY: { x: 20, y: 20, stepX: 36 }
     });
 
-
     let scaleValue = 2; 
     this.hearts.getChildren().forEach(heart => {
         heart.setScale(scaleValue);
+    });
+
+    this.timer = 0;
+    this.timerText = document.getElementById('timer');
+    this.updateTimerEvent = this.time.addEvent({
+        delay: 1000,
+        callback: updateTimer,
+        callbackScope: this,
+        loop: true
     });
 }
 
@@ -161,6 +170,13 @@ function update() {
             }
         }
     });
+}
+
+function updateTimer() {
+    this.timer += 1;
+    const minutes = Math.floor(this.timer / 60);
+    const seconds = this.timer % 60;
+    this.timerText.textContent = minutes + ':' + (seconds < 10 ? '0' + seconds : seconds);
 }
 
 function shootLaser() {
@@ -338,8 +354,14 @@ function playerShipHitAsteroid(player, asteroid) {
     if (this.playerHealth === 0) {
         window.alert("GAME OVER! " + "SCORE = " + playerScore);
         playerScore = 0;
+        resetTimer.call(this);
         this.scene.restart();
     }
+}
+
+function resetTimer() {
+    this.timer = 0;
+    this.timerText.textContent = "0:00";
 }
 
 function onLaserHitAsteroid(laser, asteroid) {
