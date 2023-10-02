@@ -15,6 +15,16 @@ const KEY_CONFIG = {
 function create() {
     this.bg = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'background').setOrigin(0);
     this.bgStars = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'background-stars').setOrigin(0);
+    this.earth = this.add.image(this.scale.width / 1.4, this.scale.height / 4, 'earth');
+    this.earth.setScale(7);
+
+    this.tweens.add({
+        targets: this.earth,
+        scaleX: 2,
+        scaleY: 2,
+        duration: 300000, // 5 minutes in milliseconds
+        ease: 'Linear'
+    });
 
     controls = {
         ACCELERATE: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.ACCELERATE]),
