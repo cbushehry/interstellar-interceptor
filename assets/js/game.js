@@ -40,7 +40,7 @@ function create() {
     this.lastShotTime = 0;
     this.isShooting = false;
     this.player.setData('isInvincible', false);
-
+    this.player.setData('shieldUsed', false);
     this.player.setData('shieldActive', false);
     this.player.setData('shieldTimer', null);
     this.shieldSprite = this.add.image(this.player.x, this.player.y, 'shield').setVisible(false);
@@ -75,9 +75,16 @@ function create() {
         maxSize: 512, 
     });
 
+    powerups = this.physics.add.group({
+        classType: Phaser.Physics.Arcade.Image,
+        maxSize: 100, // Adjust this as needed
+    });
+
     this.physics.add.collider(asteroids, asteroids, asteroidHitAsteroid, null, this);
     this.physics.add.collider(this.player, asteroids, playerShipHitAsteroid, null, this);
     this.physics.add.collider(lasers, asteroids, onLaserHitAsteroid, null, this);
+    this.physics.add.collider(this.player, powerups, onPlayerGrabPowerup, null, this);
+    
     this.anims.create({
         key: 'explode',
         frames: [
@@ -119,10 +126,6 @@ function create() {
     this.hearts.getChildren().forEach(heart => {
         heart.setScale(scaleValue);
     });
-
-    // Assuming you've added the hearts code from the snippet you provided
-    let lastHeart = this.hearts.getChildren()[this.hearts.getChildren().length - 1];
-    this.shieldIcon = this.add.image(lastHeart.x + 36, 20, 'shield').setScale(1);
 
     this.timer = 0;
     this.timerText = document.getElementById('timer');
@@ -221,37 +224,6 @@ function shootLaser() {
         laser.setScale(1);
         this.physics.velocityFromRotation(this.player.rotation, LASER_SPEED, laser.body.velocity);
     }
-}
-
-function activateShield() {
-    if (this.player.getData('shieldTimer')) {
-        this.player.getData('shieldTimer').remove(false);
-    }
-
-    this.shieldSprite.setVisible(true).setPosition(this.player.x, this.player.y);
-    this.player.setData('shieldActive', true);
-    
-    this.shieldIcon.setVisible(false);
-    this.time.addEvent({
-        delay: 10000,
-        callback: function() {
-            this.shieldIcon.setVisible(true);
-        },
-        callbackScope: this,
-        loop: false
-    });
-
-    this.player.setData('shieldTimer', this.time.addEvent({
-        delay: 4000,
-        callback: deactivateShield,
-        callbackScope: this,
-        loop: false
-    }));
-}
-
-function deactivateShield() {
-    this.player.setData('shieldActive', false);
-    this.shieldSprite.setVisible(false);
 }
 
 function spawnAsteroids() {
@@ -442,6 +414,19 @@ function onLaserHitAsteroid(laser, asteroid) {
     let explosion = this.add.sprite(asteroid.x, asteroid.y, 'explosion1');
     explosion.setScale(asteroid.scaleX, asteroid.scaleY);
     explosion.play('explode');
+}
+
+function onPlayerGrabPowerup(player, powerup) {
+    switch (powerup.getData('type')) {
+        case 'shield':
+            let lastShieldIcon = this.shieldIcons[this.shieldIcons.length - 1];
+            let newShieldIcon = this.add.image(lastShieldIcon.x + 36, 20, 'shield').setScale(1);
+            this.shieldIcons.push(newShieldIcon);
+            break;
+        // ... other cases ...
+    }
+    powerup.setActive(false);
+    powerup.setVisible(false);
 }
 
 let config = {
