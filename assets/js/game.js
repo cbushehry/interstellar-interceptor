@@ -1,61 +1,82 @@
-const PLAYER_SCALE = 1;
-const PLAYER_ACCEL = 10;
-const LASER_SPEED = 800;
-const scoreElement = document.getElementById('score');
 let playerScore = 0;
-
+const PLAYER_ACCEL = 10;
+const LASER_SPEED = 1000;
 const KEY_CONFIG = {
     ACCELERATE: 'W',
     DECELERATE: 'S',
     STRAFE_LEFT: 'A',
     STRAFE_RIGHT: 'D',
-    SHIELD: 'E'
+    SHIELD: 'SPACE',
+    BOOST: 'SHIFT'
 };
 
-function create() {
-    this.bg = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'background').setOrigin(0);
-    this.bgStars = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'background-stars').setOrigin(0);
-    this.earth = this.add.image(this.scale.width / 5, this.scale.height / 4, 'earth');
-    this.earth.setScale(7);
+// function preload() {} is on another file but still linked through index.html
 
-    this.tweens.add({
-        targets: this.earth,
-        scaleX: 2,
-        scaleY: 2,
-        duration: 300000, // 5 minutes in milliseconds
-        ease: 'Linear'
-    });
+function create() {
+    background1 = this.add.tileSprite(0, 0, window.innerWidth, window.innerHeight, 'background1').setOrigin(0, 0).setDepth(-3);
+    background2 = this.add.tileSprite(0, 0, window.innerWidth, window.innerHeight, 'background2').setOrigin(0, 0).setDepth(-3);
+
+    createAnimations.call(this);
 
     controls = {
         ACCELERATE: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.ACCELERATE]),
         DECELERATE: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.DECELERATE]),
         STRAFE_LEFT: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.STRAFE_LEFT]),
         STRAFE_RIGHT: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.STRAFE_RIGHT]),
-        SHIELD: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.SHIELD])
+        SHIELD: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.SHIELD]),
+        BOOST: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[KEY_CONFIG.BOOST])
     };
 
+    //Initalize playerShip asset
     this.player = this.physics.add.sprite(this.scale.width / 2, this.scale.height / 2, 'playerShip1');
-    this.player.setScale(PLAYER_SCALE);
+    this.maxSpeed = 100;
+    this.boostedSpeed = this.maxSpeed * 2;
+    this.isBoostActive = false;
+    this.boostEndTime = 0;
+    this.deceleratingFromBoost = false;
+    this.player.play('flight');
     this.input.on('pointerdown', shootLaser, this);
-    this.lastShotTime = 0;
     this.isShooting = false;
-    this.player.setData('isInvincible', false);
-    this.player.setData('shieldUsed', false);
-    this.player.setData('shieldActive', false);
-    this.player.setData('shieldTimer', null);
-    this.shieldSprite = this.add.image(this.player.x, this.player.y, 'shield').setVisible(false);
+    this.lastShotTime = 0;
+    this.playerShield = this.add.sprite(this.player.x, this.player.y, 'shield');
+    this.playerShield.setVisible(false);
+    this.playerShield.setScale(1.25);
+    this.player.health = 3;
 
-    this.anims.create({
-        key: 'fly',
-        frames: [
-            { key: 'playerShip1' },
-            { key: 'playerShip2' }
-        ],
-        frameRate: 8, 
-        repeat: -1
+    this.hearts = this.add.group({
+        key: 'heart',
+        repeat: this.player.health - 1,
+        setXY: { x: 20, y: 20, stepX: 20 }
     });
 
-    this.player.anims.play('fly');
+    // playerShip gains health          this.player.gainHealth(1);
+    this.player.gainHealth = function(amount) {
+        this.health += amount;
+        updateHearts.call(this.scene);  // Update heart display
+    };
+
+    // playerShip takes damage          this.player.takeDamage(1);
+    this.player.takeDamage = function(amount) {
+        this.health -= amount;
+        if (this.health < 0) this.health = 0; 
+        updateHearts.call(this.scene);  
+    
+        if (this.health == 0) {
+            window.alert("Game Over!");
+        }
+    };
+
+    this.boostIcons = this.add.group({
+        key: 'boost',
+        repeat: 2,
+        setXY: { x: 20, y: this.hearts.getChildren()[0].y + 20, stepX: 20 }
+    });
+
+    this.shieldIcon = this.add.image(
+        this.boostIcons.getChildren()[0].x + 70,
+        this.boostIcons.getChildren()[0].y - 8, 
+        'shieldIcon'
+    );
 
     this.input.on('pointerdown', function () {
         this.isShooting = true;
@@ -66,8 +87,9 @@ function create() {
     }, this);
 
     lasers = this.physics.add.group({
-        classType: Phaser.Physics.Arcade.Image, 
-        maxSize: 1000, 
+        classType: Phaser.GameObjects.Sprite,
+        maxSize: 1000,
+        runChildUpdate: true
     });
 
     asteroids = this.physics.add.group({
@@ -75,16 +97,58 @@ function create() {
         maxSize: 512, 
     });
 
-    powerups = this.physics.add.group({
-        classType: Phaser.Physics.Arcade.Image,
-        maxSize: 100, // Adjust this as needed
+    this.asteroidTimer = this.time.addEvent({
+        delay: 5000,
+        callback: spawnAsteroids,
+        callbackScope: this,
+        loop: true
     });
 
-    this.physics.add.collider(asteroids, asteroids, asteroidHitAsteroid, null, this);
-    this.physics.add.collider(this.player, asteroids, playerShipHitAsteroid, null, this);
-    this.physics.add.collider(lasers, asteroids, onLaserHitAsteroid, null, this);
-    this.physics.add.collider(this.player, powerups, onPlayerGrabPowerup, null, this);
+    this.physics.add.collider(lasers, asteroids, function(laser, asteroid) {
+        laser.setActive(false).setVisible(false); // Deactivate the laser
     
+        asteroid.hp -= 1;  // Reduce asteroid's hit points
+    
+        if (asteroid.hp <= 0) {
+            asteroid.setActive(false).setVisible(false);
+            // Add explosion effect or increment score here
+        }
+    });
+
+     this.timerText = this.add.text(this.sys.game.config.width / 2, 10, '0:00', {
+        fontSize: '24px',
+        fill: '#FFF',
+        align: 'center'
+    });
+
+    this.timer = 0;
+    this.updateTimerEvent = this.time.addEvent({
+        delay: 1000,
+        callback: updateTimer,
+        callbackScope: this,
+        loop: true
+    });
+}
+
+function createAnimations() {
+    this.anims.create({
+        key: 'flight',
+        frames: [
+            { key: 'playerShip1' },
+            { key: 'playerShip2' }
+        ],
+        frameRate: 4,
+        repeat: -1
+    });
+    this.anims.create({
+        key: 'boostedFlight',
+        frames: [
+            { key: 'playerShip1' },
+            { key: 'playerShip2' }
+        ],
+        frameRate: 8,
+        repeat: -1
+    });
     this.anims.create({
         key: 'explode',
         frames: [
@@ -100,130 +164,116 @@ function create() {
         repeat: 0,
         hideOnComplete: true
     });
-
-    this.time.addEvent({
-        delay: 3000,
-        callback: spawnAsteroids,
-        callbackScope: this,
-        loop: true
-    });
-
-    this.time.addEvent({
-        delay: 33000,
-        callback: spawnAsteroidClusters,
-        callbackScope: this,
-        loop: true
-    });
-
-    this.playerHealth = 3;
-    this.hearts = this.add.group({
-        key: 'heart',
-        repeat: this.playerHealth - 1,
-        setXY: { x: 20, y: 20, stepX: 36 }
-    });
-
-    let scaleValue = 2; 
-    this.hearts.getChildren().forEach(heart => {
-        heart.setScale(scaleValue);
-    });
-
-    this.timer = 0;
-    this.timerText = document.getElementById('timer');
-    this.updateTimerEvent = this.time.addEvent({
-        delay: 1000,
-        callback: updateTimer,
-        callbackScope: this,
-        loop: true
-    });
 }
 
 function update() {
     var pointer = this.input.activePointer;
     var angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, pointer.x, pointer.y);
-    this.player.rotation = Phaser.Math.Angle.RotateTo(this.player.rotation, angle, 0.04);
-
-        if (this.isShooting) {
-            shootLaser.call(this);
-        }
+    this.player.rotation = Phaser.Math.Angle.RotateTo(this.player.rotation, angle, 0.02);
 
     if (controls.ACCELERATE.isDown) {
         this.player.setVelocityX(this.player.body.velocity.x + Math.cos(this.player.rotation) * PLAYER_ACCEL * 0.1);
         this.player.setVelocityY(this.player.body.velocity.y + Math.sin(this.player.rotation) * PLAYER_ACCEL * 0.1);
     } else if (controls.DECELERATE.isDown) {
-        this.player.setVelocityX(this.player.body.velocity.x * 0.99);
-        this.player.setVelocityY(this.player.body.velocity.y * 0.99);
+        this.player.setVelocityX(this.player.body.velocity.x * 0.97);
+        this.player.setVelocityY(this.player.body.velocity.y * 0.97);
     } else {
-        this.player.setVelocityX(this.player.body.velocity.x * 0.99);
-        this.player.setVelocityY(this.player.body.velocity.y * 0.99);
+        this.player.setVelocityX(this.player.body.velocity.x * 0.994);
+        this.player.setVelocityY(this.player.body.velocity.y * 0.994);
     }
 
     if (controls.STRAFE_LEFT.isDown) {
-        this.player.setVelocityX(this.player.body.velocity.x + Math.sin(this.player.rotation) * PLAYER_ACCEL * 0.1);
-        this.player.setVelocityY(this.player.body.velocity.y - Math.cos(this.player.rotation) * PLAYER_ACCEL * 0.1);
-    }
-    else if (controls.STRAFE_RIGHT.isDown) {
-        this.player.setVelocityX(this.player.body.velocity.x - Math.sin(this.player.rotation) * PLAYER_ACCEL * 0.1);
-        this.player.setVelocityY(this.player.body.velocity.y + Math.cos(this.player.rotation) * PLAYER_ACCEL * 0.1);
+        this.player.setVelocityX(this.player.body.velocity.x + Math.sin(this.player.rotation) * PLAYER_ACCEL * 0.123456789);
+        this.player.setVelocityY(this.player.body.velocity.y - Math.cos(this.player.rotation) * PLAYER_ACCEL * 0.123456789);
+    } else if (controls.STRAFE_RIGHT.isDown) {
+        this.player.setVelocityX(this.player.body.velocity.x - Math.sin(this.player.rotation) * PLAYER_ACCEL * 0.123456789);
+        this.player.setVelocityY(this.player.body.velocity.y + Math.cos(this.player.rotation) * PLAYER_ACCEL * 0.123456789);
     }
 
     let speed = Math.sqrt(this.player.body.velocity.x ** 2 + this.player.body.velocity.y ** 2);
-    let maxSpeed = 100;
-    if (speed > maxSpeed) {
-        this.player.body.velocity.normalize().scale(maxSpeed);
+    if (speed > this.maxSpeed) {
+        this.player.body.velocity.normalize().scale(this.maxSpeed);
     }
 
-    if (controls.SHIELD.isDown && !this.player.getData('shieldActive')) {
+    if (Phaser.Input.Keyboard.JustDown(controls.BOOST) && !this.isBoostActive) {
+        let hasBoost = this.boostIcons.getChildren().some(icon => icon.active);
+        if (!hasBoost) {
+            return;
+        }
+
+        this.isBoostActive = true;
+        this.maxSpeed = this.boostedSpeed;
+        this.player.play('boostedFlight');
+        this.boostEndTime = this.time.now + 10000;
+
+        let boostIcons = this.boostIcons.getChildren();
+        for (let i = boostIcons.length - 1; i >= 0; i--) {
+            if (boostIcons[i].active) {
+                boostIcons[i].setActive(false).setVisible(false);
+                break;
+            }
+        }
+    }
+
+    if (this.isBoostActive && this.time.now > this.boostEndTime) {
+        this.isBoostActive = false;
+        this.deceleratingFromBoost = true;
+        this.player.play('flight');
+    }
+
+    if (this.deceleratingFromBoost) {
+        let decelerationFactor = 0.997;
+        this.maxSpeed *= decelerationFactor;
+        if (this.maxSpeed <= 100) {
+            this.maxSpeed = 100;
+            this.deceleratingFromBoost = false;
+        }
+    }
+
+    if (this.playerShield.visible) {
+        this.playerShield.x = this.player.x;
+        this.playerShield.y = this.player.y;
+    }
+
+    if (Phaser.Input.Keyboard.JustDown(controls.SHIELD) && !this.playerShield.visible) {
         activateShield.call(this);
     }
 
-    if (this.player.getData('shieldActive')) {
-        this.shieldSprite.setPosition(this.player.x, this.player.y);
+    if (this.isShooting) {
+        shootLaser.call(this);
     }
-
-    lasers.getChildren().forEach(laser => {
-        if (laser.x < 0 || laser.x > game.scale.width || laser.y < 0 || laser.y > game.scale.height) {
-            laser.setActive(false);
-            laser.setVisible(false);
-        }
-    });
-
-    asteroids.getChildren().forEach(asteroid => {
-        if (asteroid.active) {
-            const initialPosition = asteroid.getData('initialPosition');
-
-            const distanceTraveled = Phaser.Math.Distance.Between(initialPosition.x, initialPosition.y, asteroid.x, asteroid.y);
-
-            if (distanceTraveled > 4800) {
-                asteroid.setActive(false);
-                asteroid.setVisible(false);
-            }
-        }
-    });
-}
-
-function updateTimer() {
-    this.timer += 1;
-    const minutes = Math.floor(this.timer / 60);
-    const seconds = this.timer % 60;
-    this.timerText.textContent = minutes + ':' + (seconds < 10 ? '0' + seconds : seconds);
 }
 
 function shootLaser() {
     let currentTime = this.time.now;
-
-    if (currentTime - this.lastShotTime < 500) {
+    if (currentTime - this.lastShotTime < 400) {
         return;
     }
 
     this.lastShotTime = currentTime;
-
     let laser = lasers.get(this.player.x, this.player.y, 'laser4');
     if (laser) {
         laser.setActive(true);
         laser.setVisible(true);
+        laser.setDepth(-1); // Setting laser depth to below the player
         laser.setScale(1);
         this.physics.velocityFromRotation(this.player.rotation, LASER_SPEED, laser.body.velocity);
+
+        // Despawn laser after 10 seconds
+        this.time.delayedCall(10000, () => {
+            laser.setActive(false).setVisible(false);
+        }, [], this);
     }
+}
+
+function activateShield() {
+    this.playerShield.setVisible(true);
+    this.shieldIcon.setActive(false).setVisible(false);
+
+    this.time.delayedCall(10000, () => {
+        this.playerShield.setVisible(false);
+        this.shieldIcon.setActive(true).setVisible(true);
+    }, [], this);
 }
 
 function spawnAsteroids() {
@@ -255,231 +305,37 @@ function spawnAsteroids() {
     }
 }
 
-function spawnAsteroidClusters() {
-    let clusterSize = Phaser.Math.Between(24, 32);
-
-    let startX = this.game.config.width + 100;
-    let startY = -50;
-
-    let velocityX = -Phaser.Math.Between(100, 120);
-    let velocityY = Phaser.Math.Between(60, 70);
-
-    let asteroidsInCluster = [];
-
-    for (let i = 0; i < clusterSize; i++) {
-        let x = startX + Phaser.Math.Between(-100, 100);
-        let y = startY + Phaser.Math.Between(-100, 100);
-
-        let asteroidSprite = Phaser.Math.RND.pick(['asteroid1', 'asteroid2']);
-        let asteroid = asteroids.get(x, y, asteroidSprite);
-
-        if (asteroid) {
-            asteroid.setActive(true);
-            asteroid.setVisible(true);
-
-            asteroid.setScale(1);
-
-            asteroid.body.setVelocity(velocityX, velocityY);
-
-            asteroid.setData('velocity', {x: velocityX, y: velocityY});
-            asteroid.setData('initialPosition', {x: x, y: y});
-
-            asteroid.maxHitCount = 1;
-            asteroid.hitCount = 0;
-
-            if (Phaser.Math.Between(0, 1)) {
-                asteroid.body.setAngularVelocity(Phaser.Math.Between(-180, 180));
-            }
-
-            asteroidsInCluster.push(asteroid);
-        }
-    }
-
-    this.time.delayedCall(30000, function() {
-        asteroidsInCluster.forEach(asteroid => {
-            if (asteroid.active) {
-                asteroid.setActive(false);
-                asteroid.setVisible(false);
-            }
-        });
-    });
+function updateTimer() {
+    this.timer += 1;
+    const minutes = Math.floor(this.timer / 60);
+    const seconds = this.timer % 60;
+    this.timerText.setText(minutes + ':' + (seconds < 10 ? '0' + seconds : seconds));
 }
 
-function asteroidHitAsteroid(asteroid1, asteroid2) {
-    if (asteroid1.scaleX === asteroid2.scaleX) {
-        
-        let dampingFactor = 0.963;
-
-        asteroid1.body.setVelocity(asteroid1.body.velocity.x * dampingFactor, asteroid1.body.velocity.y * dampingFactor);
-        asteroid2.body.setVelocity(asteroid2.body.velocity.x * dampingFactor, asteroid2.body.velocity.y * dampingFactor);
-    } else {
-        let smallerAsteroid, largerAsteroid;
-        
-        if (asteroid1.scaleX < asteroid2.scaleX) {
-            smallerAsteroid = asteroid1;
-            largerAsteroid = asteroid2;
-        } else {
-            smallerAsteroid = asteroid2;
-            largerAsteroid = asteroid1;
-        }
-
-        smallerAsteroid.setActive(false);
-        smallerAsteroid.setVisible(false);
-        
-        let explosion = this.add.sprite(smallerAsteroid.x, smallerAsteroid.y, 'explosion1');
-        explosion.setScale(smallerAsteroid.scaleX, smallerAsteroid.scaleY);
-        explosion.play('explode');
-    }
-}
-
-function playerShipHitAsteroid(player, asteroid) {
-    if (player.getData('isInvincible')) {
-        return;
-    }
-
-    if (player.getData('shieldActive')) {
-        asteroid.setVelocity(
-            asteroid.body.velocity.x * -1.5,
-            asteroid.body.velocity.y * -1.5
-        );
-    } else {
-
-        player.setData('isInvincible', true);
-        
-        let blinkCount = 0;
-        let blinkEvent = this.time.addEvent({
-            delay: 300,
-            callback: function () {
-                player.setVisible(!player.visible);
-                blinkCount++;
-                if (blinkCount >= 10) { 
-                    blinkEvent.remove(); 
-                    player.setVisible(true);
-                }
-            },
-            callbackScope: this,
-            repeat: 9
-        });
-
-        this.time.addEvent({
-            delay: 3000,
-            callback: function () {
-                player.setData('isInvincible', false);
-            },
-            callbackScope: this
-        });
-
-        asteroid.setActive(false);
-        asteroid.setVisible(false);
-        let explosion = this.add.sprite(asteroid.x, asteroid.y, 'explosion1');
-        explosion.setScale(asteroid.scaleX, asteroid.scaleY);
-        explosion.play('explode');
-
-        this.playerHealth -= 1;
-        this.hearts.getChildren()[this.playerHealth].setVisible(false);
-
-        if (this.playerHealth === 0) {
-            window.alert("GAME OVER! " + "SCORE = " + playerScore);
-            playerScore = 0;
-            resetTimer.call(this);
-            this.scene.restart();
-        }
-    }  
-}
-
-function resetTimer() {
-    this.timer = 0;
-    this.timerText.textContent = "0:00";
-}
-
-function onLaserHitAsteroid(laser, asteroid) {
-    laser.setActive(false);
-    laser.setVisible(false);
-
-    laser.x = -10;
-    laser.y = -10;
-
-    asteroid.hitCount = (asteroid.hitCount || 0) + 1;
-
-    if (asteroid.hitCount < asteroid.maxHitCount) {
-        let originalVelocity = asteroid.getData('velocity');
-        asteroid.body.setVelocity(originalVelocity.x, originalVelocity.y);
-        return;
-    }
-
-    asteroid.setActive(false);
-    asteroid.setVisible(false);
-    playerScore += asteroid.maxHitCount;
-    scoreElement.innerText = playerScore;
-    let explosion = this.add.sprite(asteroid.x, asteroid.y, 'explosion1');
-    explosion.setScale(asteroid.scaleX, asteroid.scaleY);
-    explosion.play('explode');
-}
-
-function onPlayerGrabPowerup(player, powerup) {
-    switch (powerup.getData('type')) {
-        case 'shield':
-            let lastShieldIcon = this.shieldIcons[this.shieldIcons.length - 1];
-            let newShieldIcon = this.add.image(lastShieldIcon.x + 36, 20, 'shield').setScale(1);
-            this.shieldIcons.push(newShieldIcon);
-            break;
-        // ... other cases ...
-    }
-    powerup.setActive(false);
-    powerup.setVisible(false);
-}
-
-let config = {
+let gameConfig = {
     type: Phaser.AUTO,
-    parent: 'game-container',
+    width: window.innerWidth,
+    height: window.innerHeight,
     scene: {
-        preload: preload, 
+        preload: preload,
         create: create,
-        update: update,
-        resize: resize,
+        update: update
     },
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 0 },
+            gravity: { y: 0 }, 
             debug: false
         }
     },
     scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH,
-        width: window.innerWidth,
-        height: window.innerHeight
-    },
-    callbacks: {
-        postBoot: function (game) {
-            window.addEventListener('resize', function () {
-                clearTimeout(resizeTimer);
-                var resizeTimer = setTimeout(function() {
-                    game.scale.resize(window.innerWidth, window.innerHeight);
-                    game.scene.scenes[0].resize({ width: window.innerWidth, height: window.innerHeight });
-                }, 200);
-            });
-        }
-    },
+        mode: Phaser.Scale.RESIZE,
+        autoCenter: Phaser.Scale.CENTER_BOTH
+    }
 };
 
-function resize(gameSize) {
-    let width = gameSize.width;
-    let height = gameSize.height;
+window.addEventListener('resize', () => {
+    game.scale.resize(window.innerWidth, window.innerHeight);
+});
 
-    if (width === undefined) {
-        width = this.game.renderer.width;
-    }
-    if (height === undefined) {
-        height = this.game.renderer.height;
-    }
-    
-    this.cameras.resize(width, height);
-
-    this.bg.setSize(width, height);
-    this.bgStars.setSize(width, height);
-}
-
-// Create the game instance
-const game = new Phaser.Game(config);
+const game = new Phaser.Game(gameConfig);
