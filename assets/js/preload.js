@@ -36,5 +36,4 @@ function preload() {
     this.load.image('powerup3', 'assets/images/powerups/powerup3.png'); // + SPEED
     this.load.image('powerup4', 'assets/images/powerups/powerup4.png'); // + LASER SPEED
     this.load.image('powerup5', 'assets/images/powerups/powerup5.png'); // + LASER POWER
-
 */

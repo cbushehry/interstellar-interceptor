@@ -1,6 +1,6 @@
 let playerScore = 0;
 const PLAYER_ACCEL = 10;
-const LASER_SPEED = 1000;
+const LASER_SPEED = 800;
 const KEY_CONFIG = {
     ACCELERATE: 'W',
     DECELERATE: 'S',
@@ -88,7 +88,7 @@ function create() {
 
     lasers = this.physics.add.group({
         classType: Phaser.GameObjects.Sprite,
-        maxSize: 1000,
+        maxSize: 10000,
         runChildUpdate: true
     });
 
@@ -102,17 +102,6 @@ function create() {
         callback: spawnAsteroids,
         callbackScope: this,
         loop: true
-    });
-
-    this.physics.add.collider(lasers, asteroids, function(laser, asteroid) {
-        laser.setActive(false).setVisible(false); // Deactivate the laser
-    
-        asteroid.hp -= 1;  // Reduce asteroid's hit points
-    
-        if (asteroid.hp <= 0) {
-            asteroid.setActive(false).setVisible(false);
-            // Add explosion effect or increment score here
-        }
     });
 
      this.timerText = this.add.text(this.sys.game.config.width / 2, 10, '0:00', {
@@ -244,6 +233,16 @@ function update() {
     }
 }
 
+function activateShield() {
+    this.playerShield.setVisible(true);
+    this.shieldIcon.setActive(false).setVisible(false);
+
+    this.time.delayedCall(10000, () => {
+        this.playerShield.setVisible(false);
+        this.shieldIcon.setActive(true).setVisible(true);
+    }, [], this);
+}
+
 function shootLaser() {
     let currentTime = this.time.now;
     if (currentTime - this.lastShotTime < 400) {
@@ -266,42 +265,51 @@ function shootLaser() {
     }
 }
 
-function activateShield() {
-    this.playerShield.setVisible(true);
-    this.shieldIcon.setActive(false).setVisible(false);
-
-    this.time.delayedCall(10000, () => {
-        this.playerShield.setVisible(false);
-        this.shieldIcon.setActive(true).setVisible(true);
-    }, [], this);
-}
-
 function spawnAsteroids() {
     let asteroidSprite = Phaser.Math.RND.pick(['asteroid1', 'asteroid2']);
-    let radius = 2000;
-    let randomAngle = Phaser.Math.FloatBetween(0, 2 * Math.PI);
-    let x = this.player.x + Math.cos(randomAngle) * radius;
-    let y = this.player.y + Math.sin(randomAngle) * radius;
-    let asteroid = asteroids.get(x, y, asteroidSprite);
+    let asteroidScale = Phaser.Math.RND.pick([2, 3]);
+    let asteroidHitCount = asteroidScale;
 
+    let perimeterWidth = this.sys.game.config.width + 100;
+    let perimeterHeight = this.sys.game.config.height + 100;
+
+    let side = Phaser.Math.Between(0, 3);
+    let x, y;
+
+    switch (side) {
+        case 0: // Top
+            x = Phaser.Math.Between(0, perimeterWidth);
+            y = -50;
+            break;
+        case 1: // Bottom
+            x = Phaser.Math.Between(0, perimeterWidth);
+            y = this.sys.game.config.height + 50;
+            break;
+        case 2: // Left
+            x = -50;
+            y = Phaser.Math.Between(0, perimeterHeight);
+            break;
+        case 3: // Right
+            x = this.sys.game.config.width + 50;
+            y = Phaser.Math.Between(0, perimeterHeight);
+            break;
+    }
+
+    // Spawn and set up the asteroid
+    let asteroid = asteroids.get(x, y, asteroidSprite);
     if (asteroid) {
-        asteroid.setActive(true);
-        asteroid.setVisible(true);
-        let scale = Phaser.Math.Between(2, 4);
-        asteroid.setScale(scale);
-        let speedFactor = Phaser.Math.Linear(0.12, 0.06, (scale - 2) / (4 - 2));
-        let velocityX = (this.player.x - x) * speedFactor;
-        let velocityY = (this.player.y - y) * speedFactor;
+        asteroid.setActive(true).setVisible(true).setScale(asteroidScale);
+
+        let asteroidSpeed = 50; 
+        let angle = Phaser.Math.Angle.Between(x, y, this.player.x, this.player.y);
+        let velocityX = Math.cos(angle) * asteroidSpeed;
+        let velocityY = Math.sin(angle) * asteroidSpeed;
+
         asteroid.body.setVelocity(velocityX, velocityY);
         asteroid.setData('velocity', {x: velocityX, y: velocityY});
         asteroid.setData('initialPosition', {x: x, y: y});
-
-        asteroid.maxHitCount = scale <= 2 ? 2 : 3;
+        asteroid.maxHitCount = asteroidHitCount;
         asteroid.hitCount = 0;
-
-        if (Phaser.Math.Between(0, 1)) {
-            asteroid.body.setAngularVelocity(Phaser.Math.Between(-120, 120));
-        }
     }
 }
 
