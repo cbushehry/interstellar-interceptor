@@ -18,6 +18,8 @@ function preload() {
 
     this.load.image('asteroid1', 'assets/images/asteroids/asteroid1.png');
     this.load.image('asteroid2', 'assets/images/asteroids/asteroid2.png');
+    this.load.image('asteroid3', 'assets/images/asteroids/asteroid3.png');
+    this.load.image('asteroid4', 'assets/images/asteroids/asteroid4.png');
 
     this.load.image('explosion1', 'assets/images/explosion/explosion1.png');
     this.load.image('explosion2', 'assets/images/explosion/explosion2.png');

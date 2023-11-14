@@ -42,7 +42,7 @@ function create() {
     this.playerShield.setVisible(false);
     this.playerShield.setScale(1.25);
     this.player.health = 3;
-
+    
     this.hearts = this.add.group({
         key: 'heart',
         repeat: this.player.health - 1,
@@ -58,11 +58,18 @@ function create() {
     // playerShip takes damage          this.player.takeDamage(1);
     this.player.takeDamage = function(amount) {
         this.health -= amount;
-        if (this.health < 0) this.health = 0; 
-        updateHearts.call(this.scene);  
+        if (this.health < 0) {
+            this.health = 0;
+        }
+    
+        updateHearts.call(this.scene);  // Update heart display
     
         if (this.health == 0) {
+            // Game over logic
             window.alert("Game Over!");
+    
+            // Restart the game
+            this.scene.scene.restart();
         }
     };
 
@@ -73,8 +80,8 @@ function create() {
     });
 
     this.shieldIcon = this.add.image(
-        this.boostIcons.getChildren()[0].x + 70,
-        this.boostIcons.getChildren()[0].y - 8, 
+        this.boostIcons.getChildren()[0].x + 20,
+        this.boostIcons.getChildren()[0].y + 30, 
         'shieldIcon'
     );
 
@@ -117,6 +124,8 @@ function create() {
         callbackScope: this,
         loop: true
     });
+    
+    this.physics.add.collider(this.player, asteroids, playerAsteroidCollision, null, this);
 }
 
 function createAnimations() {
@@ -233,12 +242,20 @@ function update() {
     }
 }
 
+function updateHearts() {
+    this.hearts.children.each((heart, index) => {
+        heart.setVisible(index < this.player.health);
+    });
+}
+
 function activateShield() {
     this.playerShield.setVisible(true);
+    this.player.isShieldActive = true;  // Flag to indicate shield is active
     this.shieldIcon.setActive(false).setVisible(false);
 
     this.time.delayedCall(10000, () => {
         this.playerShield.setVisible(false);
+        this.player.isShieldActive = false;  // Turn off shield after duration
         this.shieldIcon.setActive(true).setVisible(true);
     }, [], this);
 }
@@ -266,7 +283,7 @@ function shootLaser() {
 }
 
 function spawnAsteroids() {
-    let asteroidSprite = Phaser.Math.RND.pick(['asteroid1', 'asteroid2']);
+    let asteroidSprite = Phaser.Math.RND.pick(['asteroid3', 'asteroid4']);
     let asteroidScale = Phaser.Math.RND.pick([2, 3]);
     let asteroidHitCount = asteroidScale;
 
@@ -311,6 +328,42 @@ function spawnAsteroids() {
         asteroid.maxHitCount = asteroidHitCount;
         asteroid.hitCount = 0;
     }
+}
+
+function playerAsteroidCollision(player, asteroid) {
+    // Check if shield is active
+    if (player.isShieldActive) {
+        explodeAsteroid.call(this, asteroid);
+        return;
+    }
+
+    // Check if the player is already invincible
+    if (player.isInvincible) return;
+
+    player.takeDamage(1);  // Player loses 1 heart
+    player.isInvincible = true;  // Make player invincible for 5 seconds
+
+    // Blinking effect
+    let blinkCount = 0;
+    let blinkInterval = setInterval(() => {
+        player.setVisible(!player.visible);
+        blinkCount++;
+
+        if (blinkCount >= 6) {
+            clearInterval(blinkInterval);
+            player.setVisible(true);
+            player.isInvincible = false;
+        }
+    }, 500);
+
+    explodeAsteroid.call(this, asteroid);
+}
+
+function explodeAsteroid(asteroid) {
+    // Play the explosion animation at the asteroid's position
+    let explosion = this.add.sprite(asteroid.x, asteroid.y, 'explosion1').play('explode');
+    explosion.on('animationcomplete', () => explosion.destroy());  // Destroy the explosion sprite after animation completes
+    asteroid.destroy();  // Remove the asteroid
 }
 
 function updateTimer() {
