@@ -1,6 +1,6 @@
 let playerScore = 0;
 const PLAYER_ACCEL = 10;
-const LASER_SPEED = 800;
+const LASER_SPEED = 400;
 const KEY_CONFIG = {
     ACCELERATE: 'W',
     DECELERATE: 'S',
@@ -126,6 +126,7 @@ function create() {
     });
     
     this.physics.add.collider(this.player, asteroids, playerAsteroidCollision, null, this);
+    this.physics.add.collider(lasers, asteroids, laserAsteroidCollision, null, this);
 }
 
 function createAnimations() {
@@ -325,23 +326,20 @@ function spawnAsteroids() {
         asteroid.body.setVelocity(velocityX, velocityY);
         asteroid.setData('velocity', {x: velocityX, y: velocityY});
         asteroid.setData('initialPosition', {x: x, y: y});
-        asteroid.maxHitCount = asteroidHitCount;
-        asteroid.hitCount = 0;
+        asteroidHitCount = asteroidScale;
     }
 }
 
 function playerAsteroidCollision(player, asteroid) {
-    // Check if shield is active
     if (player.isShieldActive) {
         explodeAsteroid.call(this, asteroid);
         return;
     }
 
-    // Check if the player is already invincible
     if (player.isInvincible) return;
 
-    player.takeDamage(1);  // Player loses 1 heart
-    player.isInvincible = true;  // Make player invincible for 5 seconds
+    player.takeDamage(1);
+    player.isInvincible = true;
 
     // Blinking effect
     let blinkCount = 0;
@@ -357,6 +355,25 @@ function playerAsteroidCollision(player, asteroid) {
     }, 500);
 
     explodeAsteroid.call(this, asteroid);
+}
+
+function laserAsteroidCollision(laser, asteroid) {
+    // Remove the laser
+    laser.setActive(false).setVisible(false);
+
+    // Decrease asteroid hit count
+    asteroid.hitCount -= 1;
+
+    // Reduce asteroid's speed by 20% without altering the direction
+    let velocity = asteroid.body.velocity;
+    asteroid.body.setVelocity(velocity.x * 0.8, velocity.y * 0.8);
+
+    // Check if asteroid is destroyed
+    if (asteroid.hitCount <= 0) {
+        // Update player score based on asteroid scale
+        playerScore += asteroidScale; // Assuming scaleX represents the size of the asteroid
+        explodeAsteroid.call(this, asteroid);
+    }
 }
 
 function explodeAsteroid(asteroid) {
