@@ -124,6 +124,12 @@ function create() {
         callbackScope: this,
         loop: true
     });
+
+    this.scoreText = this.add.text(this.scale.width - 16, 16, '0', {
+        fontSize: '32px',
+        fill: '#FFFF00', // Yellow color
+        align: 'right'
+    }).setOrigin(1, 0);
     
     this.physics.add.collider(this.player, asteroids, playerAsteroidCollision, null, this);
     this.physics.add.collider(lasers, asteroids, laserAsteroidCollision, null, this);
@@ -286,7 +292,6 @@ function shootLaser() {
 function spawnAsteroids() {
     let asteroidSprite = Phaser.Math.RND.pick(['asteroid3', 'asteroid4']);
     let asteroidScale = Phaser.Math.RND.pick([2, 3]);
-    let asteroidHitCount = asteroidScale;
 
     let perimeterWidth = this.sys.game.config.width + 100;
     let perimeterHeight = this.sys.game.config.height + 100;
@@ -326,7 +331,7 @@ function spawnAsteroids() {
         asteroid.body.setVelocity(velocityX, velocityY);
         asteroid.setData('velocity', {x: velocityX, y: velocityY});
         asteroid.setData('initialPosition', {x: x, y: y});
-        asteroidHitCount = asteroidScale;
+        asteroid.hitCount = asteroidScale;
     }
 }
 
@@ -362,16 +367,16 @@ function laserAsteroidCollision(laser, asteroid) {
     laser.setActive(false).setVisible(false);
 
     // Decrease asteroid hit count
-    asteroid.hitCount -= 1;
+    asteroid.hitCount - 1;
 
     // Reduce asteroid's speed by 20% without altering the direction
     let velocity = asteroid.body.velocity;
     asteroid.body.setVelocity(velocity.x * 0.8, velocity.y * 0.8);
 
-    // Check if asteroid is destroyed
     if (asteroid.hitCount <= 0) {
-        // Update player score based on asteroid scale
-        playerScore += asteroidScale; // Assuming scaleX represents the size of the asteroid
+        playerScore += asteroid.scaleX;
+        this.scoreText.setText(playerScore);
+
         explodeAsteroid.call(this, asteroid);
     }
 }
