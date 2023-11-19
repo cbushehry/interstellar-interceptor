@@ -78,7 +78,7 @@ function create() {
 
     this.shieldIcon = this.add.image(
         this.boostIcons.getChildren()[0].x + 70,
-        this.boostIcons.getChildren()[0].y - 8, 
+        this.boostIcons.getChildren()[0].y - 9, 
         'shieldIcon'
     );
 
