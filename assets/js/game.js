@@ -1,6 +1,6 @@
 let playerScore = 0;
 const PLAYER_ACCEL = 10;
-const LASER_SPEED = 400;
+const LASER_SPEED = 800;
 const KEY_CONFIG = {
     ACCELERATE: 'W',
     DECELERATE: 'S',
@@ -126,7 +126,7 @@ function create() {
     });
 
     this.scoreText = this.add.text(this.scale.width - 16, 16, '0', {
-        fontSize: '32px',
+        fontSize: '24px',
         fill: '#FFFF00', // Yellow color
         align: 'right'
     }).setOrigin(1, 0);
@@ -269,7 +269,7 @@ function activateShield() {
 
 function shootLaser() {
     let currentTime = this.time.now;
-    if (currentTime - this.lastShotTime < 400) {
+    if (currentTime - this.lastShotTime < 200) {
         return;
     }
 
@@ -278,7 +278,8 @@ function shootLaser() {
     if (laser) {
         laser.setActive(true);
         laser.setVisible(true);
-        laser.setDepth(-1); // Setting laser depth to below the player
+        laser.rotation = this.player.rotation;
+        laser.setDepth(-1);
         laser.setScale(1);
         this.physics.velocityFromRotation(this.player.rotation, LASER_SPEED, laser.body.velocity);
 
@@ -331,6 +332,7 @@ function spawnAsteroids() {
         asteroid.body.setVelocity(velocityX, velocityY);
         asteroid.setData('velocity', {x: velocityX, y: velocityY});
         asteroid.setData('initialPosition', {x: x, y: y});
+        asteroid.body.setImmovable(true);
         asteroid.hitCount = asteroidScale;
     }
 }
@@ -367,23 +369,29 @@ function laserAsteroidCollision(laser, asteroid) {
     laser.setActive(false).setVisible(false);
 
     // Decrease asteroid hit count
-    asteroid.hitCount - 1;
-
-    // Reduce asteroid's speed by 20% without altering the direction
-    let velocity = asteroid.body.velocity;
-    asteroid.body.setVelocity(velocity.x * 0.8, velocity.y * 0.8);
+    asteroid.hitCount -= 1;
 
     if (asteroid.hitCount <= 0) {
-        playerScore += asteroid.scaleX;
+        playerScore += asteroid.scaleX; // Update score based on asteroid scale
         this.scoreText.setText(playerScore);
 
         explodeAsteroid.call(this, asteroid);
+    } else {
+        // Optional: Blink the asteroid to indicate a hit
+        asteroid.setAlpha(0.5);
+        this.time.delayedCall(100, () => {
+            asteroid.setAlpha(1);
+        }, [], this);
     }
 }
 
 function explodeAsteroid(asteroid) {
     // Play the explosion animation at the asteroid's position
     let explosion = this.add.sprite(asteroid.x, asteroid.y, 'explosion1').play('explode');
+
+    // Set the scale of the explosion to match the asteroid's scale
+    explosion.setScale(asteroid.scaleX); // Assuming scaleX represents the asteroid's scale
+
     explosion.on('animationcomplete', () => explosion.destroy());  // Destroy the explosion sprite after animation completes
     asteroid.destroy();  // Remove the asteroid
 }
