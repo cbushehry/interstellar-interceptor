@@ -62,13 +62,10 @@ function create() {
             this.health = 0;
         }
     
-        updateHearts.call(this.scene);  // Update heart display
+        updateHearts.call(this.scene);
     
         if (this.health == 0) {
-            // Game over logic
             window.alert("Game Over!");
-    
-            // Restart the game
             this.scene.scene.restart();
         }
     };
@@ -80,8 +77,8 @@ function create() {
     });
 
     this.shieldIcon = this.add.image(
-        this.boostIcons.getChildren()[0].x + 20,
-        this.boostIcons.getChildren()[0].y + 30, 
+        this.boostIcons.getChildren()[0].x + 70,
+        this.boostIcons.getChildren()[0].y - 8, 
         'shieldIcon'
     );
 
@@ -105,8 +102,15 @@ function create() {
     });
 
     this.asteroidTimer = this.time.addEvent({
-        delay: 5000,
+        delay: 3340,
         callback: spawnAsteroids,
+        callbackScope: this,
+        loop: true
+    });
+
+    this.asteroidClusterTimer = this.time.addEvent({
+        delay: 12400,
+        callback: spawnAsteroidClusters,
         callbackScope: this,
         loop: true
     });
@@ -127,7 +131,7 @@ function create() {
 
     this.scoreText = this.add.text(this.scale.width - 16, 16, '0', {
         fontSize: '24px',
-        fill: '#FFFF00', // Yellow color
+        fill: '#FFFF00',
         align: 'right'
     }).setOrigin(1, 0);
     
@@ -257,24 +261,24 @@ function updateHearts() {
 
 function activateShield() {
     this.playerShield.setVisible(true);
-    this.player.isShieldActive = true;  // Flag to indicate shield is active
+    this.player.isShieldActive = true;
     this.shieldIcon.setActive(false).setVisible(false);
 
     this.time.delayedCall(10000, () => {
         this.playerShield.setVisible(false);
-        this.player.isShieldActive = false;  // Turn off shield after duration
+        this.player.isShieldActive = false;
         this.shieldIcon.setActive(true).setVisible(true);
     }, [], this);
 }
 
 function shootLaser() {
     let currentTime = this.time.now;
-    if (currentTime - this.lastShotTime < 200) {
+    if (currentTime - this.lastShotTime < 100) {
         return;
     }
 
     this.lastShotTime = currentTime;
-    let laser = lasers.get(this.player.x, this.player.y, 'laser4');
+    let laser = lasers.get(this.player.x, this.player.y, 'laser1');
     if (laser) {
         laser.setActive(true);
         laser.setVisible(true);
@@ -283,7 +287,6 @@ function shootLaser() {
         laser.setScale(1);
         this.physics.velocityFromRotation(this.player.rotation, LASER_SPEED, laser.body.velocity);
 
-        // Despawn laser after 10 seconds
         this.time.delayedCall(10000, () => {
             laser.setActive(false).setVisible(false);
         }, [], this);
@@ -319,12 +322,11 @@ function spawnAsteroids() {
             break;
     }
 
-    // Spawn and set up the asteroid
     let asteroid = asteroids.get(x, y, asteroidSprite);
     if (asteroid) {
         asteroid.setActive(true).setVisible(true).setScale(asteroidScale);
 
-        let asteroidSpeed = 50; 
+        let asteroidSpeed = 80; 
         let angle = Phaser.Math.Angle.Between(x, y, this.player.x, this.player.y);
         let velocityX = Math.cos(angle) * asteroidSpeed;
         let velocityY = Math.sin(angle) * asteroidSpeed;
@@ -334,6 +336,31 @@ function spawnAsteroids() {
         asteroid.setData('initialPosition', {x: x, y: y});
         asteroid.body.setImmovable(true);
         asteroid.hitCount = asteroidScale;
+    }
+}
+
+function spawnAsteroidClusters() {
+    const numberOfAsteroids = Phaser.Math.Between(16, 32);
+    const asteroidSprites = ['asteroid1', 'asteroid2'];
+    const clusterSpeed = 40;
+    const clusterRadius = 100;
+    const startX = this.sys.game.config.width + 50 + clusterRadius;
+
+    for (let i = 0; i < numberOfAsteroids; i++) {
+        let angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+        let radius = Phaser.Math.FloatBetween(0, clusterRadius);
+        let x = startX + radius * Math.cos(angle);
+        let y = this.sys.game.config.height / 2 + radius * Math.sin(angle);
+
+        let asteroidSprite = Phaser.Math.RND.pick(asteroidSprites);
+        let asteroid = asteroids.get(x, y, asteroidSprite);
+        if (asteroid) {
+            asteroid.setActive(true).setVisible(true).setScale(1);
+            asteroid.body.setVelocity(-clusterSpeed, 0);
+            asteroid.body.setImmovable(true);
+            asteroid.rotation = Phaser.Math.FloatBetween(0, Math.PI * 2);
+            asteroid.hitCount = 1;
+        }
     }
 }
 
@@ -348,7 +375,6 @@ function playerAsteroidCollision(player, asteroid) {
     player.takeDamage(1);
     player.isInvincible = true;
 
-    // Blinking effect
     let blinkCount = 0;
     let blinkInterval = setInterval(() => {
         player.setVisible(!player.visible);
@@ -365,19 +391,15 @@ function playerAsteroidCollision(player, asteroid) {
 }
 
 function laserAsteroidCollision(laser, asteroid) {
-    // Remove the laser
     laser.setActive(false).setVisible(false);
-
-    // Decrease asteroid hit count
     asteroid.hitCount -= 1;
 
     if (asteroid.hitCount <= 0) {
-        playerScore += asteroid.scaleX; // Update score based on asteroid scale
+        playerScore += asteroid.scaleX;
         this.scoreText.setText(playerScore);
 
         explodeAsteroid.call(this, asteroid);
     } else {
-        // Optional: Blink the asteroid to indicate a hit
         asteroid.setAlpha(0.5);
         this.time.delayedCall(100, () => {
             asteroid.setAlpha(1);
@@ -386,14 +408,10 @@ function laserAsteroidCollision(laser, asteroid) {
 }
 
 function explodeAsteroid(asteroid) {
-    // Play the explosion animation at the asteroid's position
     let explosion = this.add.sprite(asteroid.x, asteroid.y, 'explosion1').play('explode');
-
-    // Set the scale of the explosion to match the asteroid's scale
-    explosion.setScale(asteroid.scaleX); // Assuming scaleX represents the asteroid's scale
-
-    explosion.on('animationcomplete', () => explosion.destroy());  // Destroy the explosion sprite after animation completes
-    asteroid.destroy();  // Remove the asteroid
+    explosion.setScale(asteroid.scaleX);
+    explosion.on('animationcomplete', () => explosion.destroy());
+    asteroid.destroy();
 }
 
 function updateTimer() {
