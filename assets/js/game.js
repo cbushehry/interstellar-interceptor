@@ -1,6 +1,4 @@
 let playerScore = 0;
-const PLAYER_ACCEL = 10;
-const LASER_SPEED = 800;
 const KEY_CONFIG = {
     ACCELERATE: 'W',
     DECELERATE: 'S',
@@ -15,6 +13,11 @@ const KEY_CONFIG = {
 function create() {
     background1 = this.add.tileSprite(0, 0, window.innerWidth, window.innerHeight, 'background1').setOrigin(0, 0).setDepth(-3);
     background2 = this.add.tileSprite(0, 0, window.innerWidth, window.innerHeight, 'background2').setOrigin(0, 0).setDepth(-3);
+
+     let moon = this.add.image(1400, 200, 'moon');
+     moon.setScale(0.1234);
+     moon.setDepth(-2); // Set depth so it appears behind other objects but in front of the far background
+ 
 
     createAnimations.call(this);
 
@@ -40,13 +43,13 @@ function create() {
     this.lastShotTime = 0;
     this.playerShield = this.add.sprite(this.player.x, this.player.y, 'shield');
     this.playerShield.setVisible(false);
-    this.playerShield.setScale(1.25);
+    this.playerShield.setScale(1.34);
     this.player.health = 3;
     
     this.hearts = this.add.group({
         key: 'heart',
         repeat: this.player.health - 1,
-        setXY: { x: 20, y: 20, stepX: 20 }
+        setXY: { x: 60, y: 20, stepX: 20 }
     });
 
     // playerShip gains health          this.player.gainHealth(1);
@@ -73,11 +76,11 @@ function create() {
     this.boostIcons = this.add.group({
         key: 'boost',
         repeat: 2,
-        setXY: { x: 20, y: this.hearts.getChildren()[0].y + 20, stepX: 20 }
+        setXY: { x: 60, y: this.hearts.getChildren()[0].y + 20, stepX: 20 }
     });
 
     this.shieldIcon = this.add.image(
-        this.boostIcons.getChildren()[0].x + 70,
+        this.boostIcons.getChildren()[0].x - 30,
         this.boostIcons.getChildren()[0].y - 9, 
         'shieldIcon'
     );
@@ -180,6 +183,8 @@ function update() {
     var angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, pointer.x, pointer.y);
     this.player.rotation = Phaser.Math.Angle.RotateTo(this.player.rotation, angle, 0.02);
 
+    let PLAYER_ACCEL = 10;
+
     if (controls.ACCELERATE.isDown) {
         this.player.setVelocityX(this.player.body.velocity.x + Math.cos(this.player.rotation) * PLAYER_ACCEL * 0.1);
         this.player.setVelocityY(this.player.body.velocity.y + Math.sin(this.player.rotation) * PLAYER_ACCEL * 0.1);
@@ -260,6 +265,11 @@ function updateHearts() {
 }
 
 function activateShield() {
+    if (!this.shieldIcon.active) {
+        // If the shield icon is not active, don't activate the shield
+        return;
+    }
+
     this.playerShield.setVisible(true);
     this.player.isShieldActive = true;
     this.shieldIcon.setActive(false).setVisible(false);
@@ -267,13 +277,14 @@ function activateShield() {
     this.time.delayedCall(10000, () => {
         this.playerShield.setVisible(false);
         this.player.isShieldActive = false;
-        this.shieldIcon.setActive(true).setVisible(true);
     }, [], this);
 }
 
+
 function shootLaser() {
+    let LASER_SPEED = 1100;
     let currentTime = this.time.now;
-    if (currentTime - this.lastShotTime < 100) {
+    if (currentTime - this.lastShotTime < 200) {
         return;
     }
 
