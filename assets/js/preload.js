@@ -27,6 +27,16 @@ function preload() {
     this.load.image('asteroid3', 'assets/images/asteroids/asteroid3.png');
     this.load.image('asteroid4', 'assets/images/asteroids/asteroid4.png');
 
+    this.load.image('asteroid11', 'assets/images/asteroids/asteroid11.png');
+    this.load.image('asteroid12', 'assets/images/asteroids/asteroid12.png');
+    this.load.image('asteroid13', 'assets/images/asteroids/asteroid13.png');
+    this.load.image('asteroid14', 'assets/images/asteroids/asteroid14.png');
+    this.load.image('asteroid15', 'assets/images/asteroids/asteroid15.png');
+    this.load.image('asteroid21', 'assets/images/asteroids/asteroid21.png');
+    this.load.image('asteroid22', 'assets/images/asteroids/asteroid22.png');
+    this.load.image('asteroid23', 'assets/images/asteroids/asteroid23.png');
+    this.load.image('asteroid24', 'assets/images/asteroids/asteroid24.png');
+
     this.load.image('explosion1', 'assets/images/explosion/explosion1.png');
     this.load.image('explosion2', 'assets/images/explosion/explosion2.png');
     this.load.image('explosion3', 'assets/images/explosion/explosion3.png');

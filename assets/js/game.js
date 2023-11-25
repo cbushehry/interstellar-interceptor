@@ -15,10 +15,9 @@ function create() {
     background2 = this.add.tileSprite(0, 0, window.innerWidth, window.innerHeight, 'background2').setOrigin(0, 0).setDepth(-3);
 
      let earth = this.add.image(1300, 400, 'earth');
-     earth.setScale(0.7);
+     earth.setScale(0.6789);
      earth.setDepth(-2); // Set depth so it appears behind other objects but in front of the far background
  
-
     createAnimations.call(this);
 
     controls = {
@@ -305,7 +304,7 @@ function shootLaser() {
 }
 
 function spawnAsteroids() {
-    let asteroidSprite = Phaser.Math.RND.pick(['asteroid3', 'asteroid4']);
+    let asteroidSprite = Phaser.Math.RND.pick(['asteroid13', 'asteroid15']);
     let asteroidScale = Phaser.Math.RND.pick([2, 3]);
 
     let perimeterWidth = this.sys.game.config.width + 100;
