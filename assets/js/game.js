@@ -14,9 +14,9 @@ function create() {
     background1 = this.add.tileSprite(0, 0, window.innerWidth, window.innerHeight, 'background1').setOrigin(0, 0).setDepth(-3);
     background2 = this.add.tileSprite(0, 0, window.innerWidth, window.innerHeight, 'background2').setOrigin(0, 0).setDepth(-3);
 
-     let moon = this.add.image(1400, 200, 'moon');
-     moon.setScale(0.1234);
-     moon.setDepth(-2); // Set depth so it appears behind other objects but in front of the far background
+     let earth = this.add.image(1300, 400, 'earth');
+     earth.setScale(0.7);
+     earth.setDepth(-2); // Set depth so it appears behind other objects but in front of the far background
  
 
     createAnimations.call(this);
