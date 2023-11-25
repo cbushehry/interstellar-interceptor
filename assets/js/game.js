@@ -14,10 +14,38 @@ function create() {
     background1 = this.add.tileSprite(0, 0, window.innerWidth, window.innerHeight, 'background1').setOrigin(0, 0).setDepth(-3);
     background2 = this.add.tileSprite(0, 0, window.innerWidth, window.innerHeight, 'background2').setOrigin(0, 0).setDepth(-3);
 
-     let earth = this.add.image(1300, 400, 'earth');
-     earth.setScale(0.6789);
-     earth.setDepth(-2); // Set depth so it appears behind other objects but in front of the far background
- 
+    // Create the Earth image at the calculated position
+    let earth = this.add.image(earthX, earthY, 'earth');
+    earth.setScale(1);
+    earth.setDepth(-2);
+
+    // Set the initial and final scales
+    let initialScale = 1;
+    let finalScale = 0.2;
+
+    // Duration for the scale transition in milliseconds (10 minutes)
+    let duration = 10 * 60 * 1000;
+
+    // Calculate the amount to decrease the scale in each step
+    let scaleDecrement = (initialScale - finalScale) / (duration / 100); // Update every 100ms
+
+    // Create a timed event to update the scale
+    this.time.addEvent({
+        delay: 100,  // Update every 100 milliseconds
+        callback: () => {
+            // Decrease the scale
+            earth.scale -= scaleDecrement;
+
+            // Clamp the scale to the final scale
+            if (earth.scale < finalScale) {
+                earth.scale = finalScale;
+                earth.setScale(earth.scale);  // Apply the new scale
+            }
+        },
+        callbackScope: this,
+        loop: true
+    });
+
     createAnimations.call(this);
 
     controls = {
@@ -116,6 +144,10 @@ function create() {
         callbackScope: this,
         loop: true
     });
+
+    if (playerScore % 100 === 0 && playerScore > 0) {
+        spawnAsteroidPowerUp.call(this);
+    }
 
      this.timerText = this.add.text(this.sys.game.config.width / 2, 10, '0:00', {
         fontSize: '24px',
@@ -374,6 +406,19 @@ function spawnAsteroidClusters() {
     }
 }
 
+function spawnAsteroidPowerUp() {
+    let x = this.sys.game.config.width + 150; // Spawn off the right edge of the screen
+    let y = Phaser.Math.Between(100, this.sys.game.config.height - 100); // Random y position
+
+    let asteroidPowerUp = asteroids.get(x, y, 'asteroid21');
+    if (asteroidPowerUp) {
+        asteroidPowerUp.setActive(true).setVisible(true).setScale(0.34);
+        asteroidPowerUp.body.setVelocity(-100, 0); // Move left at speed 100
+        asteroidPowerUp.rotation = Phaser.Math.FloatBetween(0, Math.PI * 2); // Random rotation
+        asteroidPowerUp.hitCount = 10; // Requires 10 hits to destroy
+    }
+}
+
 function playerAsteroidCollision(player, asteroid) {
     if (player.isShieldActive) {
         explodeAsteroid.call(this, asteroid);
@@ -402,6 +447,15 @@ function playerAsteroidCollision(player, asteroid) {
 
 function laserAsteroidCollision(laser, asteroid) {
     laser.setActive(false).setVisible(false);
+
+    if (asteroid.texture.key === 'asteroid21') {
+        asteroid.hitCount -= 1;
+        if (asteroid.hitCount <= 0) {
+            dropPowerUp(asteroid.x, asteroid.y); // Drop a power-up
+            asteroid.destroy();
+        }
+    }
+
     asteroid.hitCount -= 1;
 
     if (asteroid.hitCount <= 0) {
@@ -422,6 +476,13 @@ function explodeAsteroid(asteroid) {
     explosion.setScale(asteroid.scaleX);
     explosion.on('animationcomplete', () => explosion.destroy());
     asteroid.destroy();
+}
+
+function dropPowerUp(x, y) {
+    let powerUpType = Phaser.Math.RND.pick(['powerUp1', 'powerUp2']);
+    let powerUp = this.physics.add.sprite(x, y, powerUpType);
+    
+    // Implement logic for picking up power-ups...
 }
 
 function updateTimer() {
