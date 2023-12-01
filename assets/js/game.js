@@ -145,10 +145,6 @@ function create() {
         loop: true
     });
 
-    if (playerScore % 100 === 0 && playerScore > 0) {
-        spawnAsteroidPowerUp.call(this);
-    }
-
      this.timerText = this.add.text(this.sys.game.config.width / 2, 10, '0:00', {
         fontSize: '24px',
         fill: '#FFF',
@@ -311,7 +307,6 @@ function activateShield() {
     }, [], this);
 }
 
-
 function shootLaser() {
     let LASER_SPEED = 1100;
     let currentTime = this.time.now;
@@ -406,19 +401,6 @@ function spawnAsteroidClusters() {
     }
 }
 
-function spawnAsteroidPowerUp() {
-    let x = this.sys.game.config.width + 150; // Spawn off the right edge of the screen
-    let y = Phaser.Math.Between(100, this.sys.game.config.height - 100); // Random y position
-
-    let asteroidPowerUp = asteroids.get(x, y, 'asteroid21');
-    if (asteroidPowerUp) {
-        asteroidPowerUp.setActive(true).setVisible(true).setScale(0.34);
-        asteroidPowerUp.body.setVelocity(-100, 0); // Move left at speed 100
-        asteroidPowerUp.rotation = Phaser.Math.FloatBetween(0, Math.PI * 2); // Random rotation
-        asteroidPowerUp.hitCount = 10; // Requires 10 hits to destroy
-    }
-}
-
 function playerAsteroidCollision(player, asteroid) {
     if (player.isShieldActive) {
         explodeAsteroid.call(this, asteroid);
@@ -447,15 +429,6 @@ function playerAsteroidCollision(player, asteroid) {
 
 function laserAsteroidCollision(laser, asteroid) {
     laser.setActive(false).setVisible(false);
-
-    if (asteroid.texture.key === 'asteroid21') {
-        asteroid.hitCount -= 1;
-        if (asteroid.hitCount <= 0) {
-            dropPowerUp(asteroid.x, asteroid.y); // Drop a power-up
-            asteroid.destroy();
-        }
-    }
-
     asteroid.hitCount -= 1;
 
     if (asteroid.hitCount <= 0) {
@@ -476,13 +449,6 @@ function explodeAsteroid(asteroid) {
     explosion.setScale(asteroid.scaleX);
     explosion.on('animationcomplete', () => explosion.destroy());
     asteroid.destroy();
-}
-
-function dropPowerUp(x, y) {
-    let powerUpType = Phaser.Math.RND.pick(['powerUp1', 'powerUp2']);
-    let powerUp = this.physics.add.sprite(x, y, powerUpType);
-    
-    // Implement logic for picking up power-ups...
 }
 
 function updateTimer() {
