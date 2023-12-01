@@ -14,37 +14,14 @@ function create() {
     background1 = this.add.tileSprite(0, 0, window.innerWidth, window.innerHeight, 'background1').setOrigin(0, 0).setDepth(-3);
     background2 = this.add.tileSprite(0, 0, window.innerWidth, window.innerHeight, 'background2').setOrigin(0, 0).setDepth(-3);
 
+    // Calculate the position based on the percentage of screen dimensions
+    let earthX = window.innerWidth * 0.63;  // 67% to the right
+    let earthY = window.innerHeight * 0.25; // 34% from the top
+
     // Create the Earth image at the calculated position
     let earth = this.add.image(earthX, earthY, 'earth');
-    earth.setScale(1);
+    earth.setScale(0.34567);
     earth.setDepth(-2);
-
-    // Set the initial and final scales
-    let initialScale = 1;
-    let finalScale = 0.2;
-
-    // Duration for the scale transition in milliseconds (10 minutes)
-    let duration = 10 * 60 * 1000;
-
-    // Calculate the amount to decrease the scale in each step
-    let scaleDecrement = (initialScale - finalScale) / (duration / 100); // Update every 100ms
-
-    // Create a timed event to update the scale
-    this.time.addEvent({
-        delay: 100,  // Update every 100 milliseconds
-        callback: () => {
-            // Decrease the scale
-            earth.scale -= scaleDecrement;
-
-            // Clamp the scale to the final scale
-            if (earth.scale < finalScale) {
-                earth.scale = finalScale;
-                earth.setScale(earth.scale);  // Apply the new scale
-            }
-        },
-        callbackScope: this,
-        loop: true
-    });
 
     createAnimations.call(this);
 
@@ -139,8 +116,15 @@ function create() {
     });
 
     this.asteroidClusterTimer = this.time.addEvent({
-        delay: 12400,
+        delay: 64400,
         callback: spawnAsteroidClusters,
+        callbackScope: this,
+        loop: true
+    });
+
+    this.asteroidPowerUpTimer = this.time.addEvent({
+        delay: 13340,
+        callback: spawnAsteroidPowerUp,
         callbackScope: this,
         loop: true
     });
@@ -331,15 +315,13 @@ function shootLaser() {
 }
 
 function spawnAsteroids() {
-    let asteroidSprite = Phaser.Math.RND.pick(['asteroid13', 'asteroid15']);
-    let asteroidScale = Phaser.Math.RND.pick([2, 3]);
+    let asteroidSprite = Phaser.Math.RND.pick(['asteroid11', 'asteroid21', 'asteroid23']);
 
     let perimeterWidth = this.sys.game.config.width + 100;
     let perimeterHeight = this.sys.game.config.height + 100;
 
     let side = Phaser.Math.Between(0, 3);
     let x, y;
-
     switch (side) {
         case 0: // Top
             x = Phaser.Math.Between(0, perimeterWidth);
@@ -361,7 +343,7 @@ function spawnAsteroids() {
 
     let asteroid = asteroids.get(x, y, asteroidSprite);
     if (asteroid) {
-        asteroid.setActive(true).setVisible(true).setScale(asteroidScale);
+        asteroid.setActive(true).setVisible(true).setScale(0.34);;
 
         let asteroidSpeed = 80; 
         let angle = Phaser.Math.Angle.Between(x, y, this.player.x, this.player.y);
@@ -372,7 +354,7 @@ function spawnAsteroids() {
         asteroid.setData('velocity', {x: velocityX, y: velocityY});
         asteroid.setData('initialPosition', {x: x, y: y});
         asteroid.body.setImmovable(true);
-        asteroid.hitCount = asteroidScale;
+        asteroid.hitCount = 3;
     }
 }
 
@@ -399,6 +381,67 @@ function spawnAsteroidClusters() {
             asteroid.hitCount = 1;
         }
     }
+}
+
+function spawnAsteroidPowerUp() {
+    let perimeterWidth = this.sys.game.config.width + 100;
+    let perimeterHeight = this.sys.game.config.height + 100;
+
+    let side = Phaser.Math.Between(0, 3);
+    let x, y, velocityX, velocityY;
+
+    switch (side) {
+        case 0: // Top
+            x = Phaser.Math.Between(0, perimeterWidth);
+            y = -50;
+            velocityX = 0;
+            velocityY = 100;
+            break;
+        case 1: // Bottom
+            x = Phaser.Math.Between(0, perimeterWidth);
+            y = this.sys.game.config.height + 50;
+            velocityX = 0;
+            velocityY = -100;
+            break;
+        case 2: // Left
+            x = -50;
+            y = Phaser.Math.Between(0, perimeterHeight);
+            velocityX = 100;
+            velocityY = 0;
+            break;
+        case 3: // Right
+            x = this.sys.game.config.width + 50;
+            y = Phaser.Math.Between(0, perimeterHeight);
+            velocityX = -100;
+            velocityY = 0;
+            break;
+    }
+
+    let asteroidPowerUp = asteroids.get(x, y, 'asteroid43');
+    if (asteroidPowerUp) {
+        asteroidPowerUp.setScale(0.5);
+        asteroidPowerUp.setActive(true).setVisible(true).setScale(0.34);
+        asteroidPowerUp.body.setVelocity(velocityX, velocityY);
+        asteroidPowerUp.rotation = Phaser.Math.FloatBetween(0, Math.PI * 2);
+        asteroidPowerUp.body.setImmovable(true);
+        asteroidPowerUp.hitCount = 7;
+    }
+}
+
+function dropPowerUp(x, y) {
+    let powerUpType = Phaser.Math.RND.pick(['powerUp1', 'powerUp2']);
+    let powerUp = this.physics.add.sprite(x, y, powerUpType).setActive(true).setVisible(true);
+
+    this.physics.add.overlap(this.player, powerUp, function(player, powerUp) {
+        if (powerUp.texture.key === 'powerUp1') {
+            player.gainHealth(1);
+        } else if (powerUp.texture.key === 'powerUp2') {
+            if (!this.shieldIcon.active) {
+                this.shieldIcon.setActive(true).setVisible(true);
+            }
+        }
+        powerUp.destroy();
+    }, null, this);
 }
 
 function playerAsteroidCollision(player, asteroid) {
@@ -429,26 +472,30 @@ function playerAsteroidCollision(player, asteroid) {
 
 function laserAsteroidCollision(laser, asteroid) {
     laser.setActive(false).setVisible(false);
+
     asteroid.hitCount -= 1;
-
     if (asteroid.hitCount <= 0) {
-        playerScore += asteroid.scaleX;
-        this.scoreText.setText(playerScore);
-
-        explodeAsteroid.call(this, asteroid);
-    } else {
-        asteroid.setAlpha(0.5);
-        this.time.delayedCall(100, () => {
-            asteroid.setAlpha(1);
-        }, [], this);
+        if (asteroid.texture.key === 'asteroid43') {
+            explodeAsteroid.call(this, asteroid, true); // Power-up asteroid
+        } else {
+            explodeAsteroid.call(this, asteroid); // Regular asteroid
+            playerScore += (3 - asteroid.hitCount); // Scoring based on hitCount
+            this.scoreText.setText(playerScore);
+        }
     }
 }
 
-function explodeAsteroid(asteroid) {
+function explodeAsteroid(asteroid, isPowerUp = false) {
     let explosion = this.add.sprite(asteroid.x, asteroid.y, 'explosion1').play('explode');
-    explosion.setScale(asteroid.scaleX);
-    explosion.on('animationcomplete', () => explosion.destroy());
-    asteroid.destroy();
+    explosion.setScale(3);
+    explosion.on('animationcomplete', () => {
+        explosion.destroy();
+    });
+
+    if (isPowerUp) {
+        dropPowerUp.call(this, asteroid.x, asteroid.y); // Drop a power-up at the explosion location
+    }
+    asteroid.destroy(); // Move the destroy call to the end
 }
 
 function updateTimer() {

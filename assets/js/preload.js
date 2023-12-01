@@ -16,11 +16,11 @@ function preload() {
     this.load.image('laser3', 'assets/images/lasers/laser3.png');
     this.load.image('laser4', 'assets/images/lasers/laser4.png');
 
-    this.load.image('powerup1', 'assets/images/powerups/powerup1.png'); // + HEART
-    this.load.image('powerup2', 'assets/images/powerups/powerup2.png'); // + SHIELD
-    this.load.image('powerup3', 'assets/images/powerups/powerup3.png'); // + SPEED
-    this.load.image('powerup4', 'assets/images/powerups/powerup4.png'); // + LASER SPEED
-    this.load.image('powerup5', 'assets/images/powerups/powerup5.png'); // + LASER POWER
+    this.load.image('powerUp1', 'assets/images/powerups/powerUp1.png'); // + HEART
+    this.load.image('powerUp2', 'assets/images/powerups/powerUp2.png'); // + SHIELD
+    this.load.image('powerUp3', 'assets/images/powerups/powerUp3.png'); // + SPEED
+    this.load.image('powerUp4', 'assets/images/powerups/powerUp4.png'); // + LASER SPEED
+    this.load.image('powerUp5', 'assets/images/powerups/powerUp5.png'); // + LASER POWER
 
     this.load.image('asteroid1', 'assets/images/asteroids/asteroid1.png');
     this.load.image('asteroid2', 'assets/images/asteroids/asteroid2.png');
@@ -36,6 +36,7 @@ function preload() {
     this.load.image('asteroid22', 'assets/images/asteroids/asteroid22.png');
     this.load.image('asteroid23', 'assets/images/asteroids/asteroid23.png');
     this.load.image('asteroid24', 'assets/images/asteroids/asteroid24.png');
+    this.load.image('asteroid43', 'assets/images/asteroids/asteroid43.png');
 
     this.load.image('explosion1', 'assets/images/explosion/explosion1.png');
     this.load.image('explosion2', 'assets/images/explosion/explosion2.png');
