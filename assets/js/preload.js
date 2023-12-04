@@ -36,6 +36,8 @@ function preload() {
     this.load.image('asteroid22', 'assets/images/asteroids/asteroid22.png');
     this.load.image('asteroid23', 'assets/images/asteroids/asteroid23.png');
     this.load.image('asteroid24', 'assets/images/asteroids/asteroid24.png');
+    this.load.image('asteroid25', 'assets/images/asteroids/asteroid25.png');
+    this.load.image('asteroid26', 'assets/images/asteroids/asteroid26.png');
     this.load.image('asteroid43', 'assets/images/asteroids/asteroid43.png');
 
     this.load.image('explosion1', 'assets/images/explosion/explosion1.png');

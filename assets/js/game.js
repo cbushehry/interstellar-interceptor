@@ -49,6 +49,7 @@ function create() {
     this.playerShield.setVisible(false);
     this.playerShield.setScale(1.34);
     this.player.health = 3;
+    this.player.shields = 1;
     
     this.hearts = this.add.group({
         key: 'heart',
@@ -83,6 +84,8 @@ function create() {
         setXY: { x: 60, y: this.hearts.getChildren()[0].y + 20, stepX: 20 }
     });
 
+    this.shieldIcons = this.add.group();
+    
     this.shieldIcon = this.add.image(
         this.boostIcons.getChildren()[0].x - 30,
         this.boostIcons.getChildren()[0].y - 9, 
@@ -109,21 +112,21 @@ function create() {
     });
 
     this.asteroidTimer = this.time.addEvent({
-        delay: 3340,
+        delay: 27340,
         callback: spawnAsteroids,
         callbackScope: this,
         loop: true
     });
 
     this.asteroidClusterTimer = this.time.addEvent({
-        delay: 64400,
+        delay: 9400,
         callback: spawnAsteroidClusters,
         callbackScope: this,
         loop: true
     });
 
     this.asteroidPowerUpTimer = this.time.addEvent({
-        delay: 13340,
+        delay: 36340,
         callback: spawnAsteroidPowerUp,
         callbackScope: this,
         loop: true
@@ -270,9 +273,33 @@ function update() {
 }
 
 function updateHearts() {
-    this.hearts.children.each((heart, index) => {
-        heart.setVisible(index < this.player.health);
-    });
+    // Clear existing hearts
+    this.hearts.clear(true, true);
+
+    // Create new hearts based on current health
+    for (let i = 0; i < this.player.health; i++) {
+        this.hearts.create(60 + i * 20, 20, 'heart');
+    }
+}
+
+function updateShields() {
+    // Clear existing shield icons
+    this.shieldIcons.clear(true, true);
+
+    // Calculate the starting position for the first shield icon
+    let startX = this.shieldIcon.x;
+    let startY = this.shieldIcon.y;
+
+    // Create new shield icons based on the number of shields
+    for (let i = 0; i < this.player.shields; i++) {
+        // For the first shield, use the existing shieldIcon's position
+        if (i === 0) {
+            this.shieldIcons.create(startX, startY, 'shieldIcon');
+        } else {
+            // For subsequent shields, place them below the previous one
+            this.shieldIcons.create(startX, startY + i * 35, 'shieldIcon');
+        }
+    }
 }
 
 function activateShield() {
@@ -285,7 +312,7 @@ function activateShield() {
     this.player.isShieldActive = true;
     this.shieldIcon.setActive(false).setVisible(false);
 
-    this.time.delayedCall(10000, () => {
+    this.time.delayedCall(6000, () => {
         this.playerShield.setVisible(false);
         this.player.isShieldActive = false;
     }, [], this);
@@ -359,26 +386,34 @@ function spawnAsteroids() {
 }
 
 function spawnAsteroidClusters() {
-    const numberOfAsteroids = Phaser.Math.Between(16, 32);
-    const asteroidSprites = ['asteroid1', 'asteroid2'];
+    const numberOfAsteroids = Phaser.Math.Between(8, 12);
+    const asteroidSprites = ['asteroid21', 'asteroid22', 'asteroid23', 'asteroid24', 'asteroid25', 'asteroid26'];
     const clusterSpeed = 40;
     const clusterRadius = 100;
-    const startX = this.sys.game.config.width + 50 + clusterRadius;
+
+    // Start position on the right, vertically centered
+    const startX = this.sys.game.config.width + clusterRadius; 
+    const startY = this.sys.game.config.height / 2;
 
     for (let i = 0; i < numberOfAsteroids; i++) {
-        let angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
-        let radius = Phaser.Math.FloatBetween(0, clusterRadius);
-        let x = startX + radius * Math.cos(angle);
-        let y = this.sys.game.config.height / 2 + radius * Math.sin(angle);
+        // Random positions within the cluster radius
+        let x = startX + Phaser.Math.FloatBetween(-clusterRadius, clusterRadius);
+        let y = startY + Phaser.Math.FloatBetween(-clusterRadius, clusterRadius);
 
-        let asteroidSprite = Phaser.Math.RND.pick(asteroidSprites);
-        let asteroid = asteroids.get(x, y, asteroidSprite);
-        if (asteroid) {
-            asteroid.setActive(true).setVisible(true).setScale(1);
-            asteroid.body.setVelocity(-clusterSpeed, 0);
-            asteroid.body.setImmovable(true);
-            asteroid.rotation = Phaser.Math.FloatBetween(0, Math.PI * 2);
-            asteroid.hitCount = 1;
+        // Ensure asteroids are within the cluster radius
+        if (Phaser.Math.Distance.Between(startX, startY, x, y) <= clusterRadius) {
+            let asteroidSprite = Phaser.Math.RND.pick(asteroidSprites);
+            let asteroid = asteroids.get(x, y, asteroidSprite);
+            if (asteroid) {
+                asteroid.setActive(true).setVisible(true).setScale(0.34);
+
+                // Moving left with a fixed speed
+                asteroid.body.setVelocity(-clusterSpeed, 0);
+
+                asteroid.body.setImmovable(true);
+                asteroid.rotation = Phaser.Math.FloatBetween(0, Math.PI * 2);
+                asteroid.hitCount = 1;
+            }
         }
     }
 }
@@ -419,7 +454,6 @@ function spawnAsteroidPowerUp() {
 
     let asteroidPowerUp = asteroids.get(x, y, 'asteroid43');
     if (asteroidPowerUp) {
-        asteroidPowerUp.setScale(0.5);
         asteroidPowerUp.setActive(true).setVisible(true).setScale(0.34);
         asteroidPowerUp.body.setVelocity(velocityX, velocityY);
         asteroidPowerUp.rotation = Phaser.Math.FloatBetween(0, Math.PI * 2);
@@ -435,9 +469,11 @@ function dropPowerUp(x, y) {
     this.physics.add.overlap(this.player, powerUp, function(player, powerUp) {
         if (powerUp.texture.key === 'powerUp1') {
             player.gainHealth(1);
+            updateHearts.call(this);
         } else if (powerUp.texture.key === 'powerUp2') {
-            if (!this.shieldIcon.active) {
-                this.shieldIcon.setActive(true).setVisible(true);
+            if (powerUp.texture.key === 'powerUp2') {
+                this.player.shields++;
+                updateShields.call(this);
             }
         }
         powerUp.destroy();
@@ -486,16 +522,16 @@ function laserAsteroidCollision(laser, asteroid) {
 }
 
 function explodeAsteroid(asteroid, isPowerUp = false) {
+    let explosionScale = 1.34;
     let explosion = this.add.sprite(asteroid.x, asteroid.y, 'explosion1').play('explode');
-    explosion.setScale(3);
+    explosion.setScale(explosionScale);
     explosion.on('animationcomplete', () => {
         explosion.destroy();
+        if (isPowerUp) {
+            dropPowerUp.call(this, asteroid.x, asteroid.y);
+        }
     });
-
-    if (isPowerUp) {
-        dropPowerUp.call(this, asteroid.x, asteroid.y); // Drop a power-up at the explosion location
-    }
-    asteroid.destroy(); // Move the destroy call to the end
+    asteroid.destroy();
 }
 
 function updateTimer() {
