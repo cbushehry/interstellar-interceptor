@@ -303,18 +303,32 @@ function updateShields() {
 }
 
 function activateShield() {
-    if (!this.shieldIcon.active) {
-        // If the shield icon is not active, don't activate the shield
+    // Check if there are any shields available to activate
+    if (this.player.shields <= 0) {
+        // If no shields are available, exit the function
         return;
     }
 
+    // Activate the shield
     this.playerShield.setVisible(true);
     this.player.isShieldActive = true;
-    this.shieldIcon.setActive(false).setVisible(false);
 
+    // Reduce the shield count by one
+    this.player.shields--;
+
+    // Update the shield icons on the UI
+    updateShields.call(this);
+
+    // Set a timer to deactivate the shield
     this.time.delayedCall(6000, () => {
         this.playerShield.setVisible(false);
         this.player.isShieldActive = false;
+
+        // Optional: Automatically regenerate a shield after a delay
+        // this.time.delayedCall(10000, () => {
+        //     this.player.shields++;
+        //     updateShields.call(this);
+        // }, [], this);
     }, [], this);
 }
 
