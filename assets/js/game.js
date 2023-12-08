@@ -14,11 +14,9 @@ function create() {
     background1 = this.add.tileSprite(0, 0, window.innerWidth, window.innerHeight, 'background1').setOrigin(0, 0).setDepth(-3);
     background2 = this.add.tileSprite(0, 0, window.innerWidth, window.innerHeight, 'background2').setOrigin(0, 0).setDepth(-3);
 
-    // Calculate the position based on the percentage of screen dimensions
     let earthX = window.innerWidth * 0.63;  // 67% to the right
     let earthY = window.innerHeight * 0.25; // 34% from the top
 
-    // Create the Earth image at the calculated position
     let earth = this.add.image(earthX, earthY, 'earth');
     earth.setScale(0.34567);
     earth.setDepth(-2);
@@ -273,53 +271,39 @@ function update() {
 }
 
 function updateHearts() {
-    // Clear existing hearts
     this.hearts.clear(true, true);
 
-    // Create new hearts based on current health
     for (let i = 0; i < this.player.health; i++) {
         this.hearts.create(60 + i * 20, 20, 'heart');
     }
 }
 
 function updateShields() {
-    // Clear existing shield icons
     this.shieldIcons.clear(true, true);
-
-    // Calculate the starting position for the first shield icon
     let startX = this.shieldIcon.x;
     let startY = this.shieldIcon.y;
 
-    // Create new shield icons based on the number of shields
-    for (let i = 0; i < this.player.shields; i++) {
-        // For the first shield, use the existing shieldIcon's position
-        if (i === 0) {
-            this.shieldIcons.create(startX, startY, 'shieldIcon');
-        } else {
-            // For subsequent shields, place them below the previous one
-            this.shieldIcons.create(startX, startY + i * 35, 'shieldIcon');
-        }
+    if (this.player.shields > 0) {
+        this.shieldIcon.setVisible(true);
+    } else {
+        this.shieldIcon.setVisible(false);
+    }
+
+    for (let i = 1; i < this.player.shields; i++) {
+        this.shieldIcons.create(startX, startY + i * 35, 'shieldIcon');
     }
 }
 
 function activateShield() {
-    // Check if there are any shields available to activate
     if (this.player.shields <= 0) {
-        // If no shields are available, exit the function
         return;
     }
 
-    // Activate the shield
     this.playerShield.setVisible(true);
     this.player.isShieldActive = true;
-
-    // Reduce the shield count by one
     this.player.shields--;
-
-    // Update the shield icons on the UI
     updateShields.call(this);
 
-    // Set a timer to deactivate the shield
     this.time.delayedCall(6000, () => {
         this.playerShield.setVisible(false);
         this.player.isShieldActive = false;
@@ -434,6 +418,7 @@ function spawnAsteroidClusters() {
             asteroid.setActive(true).setVisible(true).setScale(0.34);
             asteroid.body.setVelocity(-clusterSpeed, 0);
             asteroid.body.setImmovable(true);
+            asteroid.isClusterAsteroid = true;
             asteroid.rotation = Phaser.Math.FloatBetween(0, Math.PI * 2);
             asteroid.hitCount = 1;
 
@@ -540,7 +525,11 @@ function laserAsteroidCollision(laser, asteroid) {
             explodeAsteroid.call(this, asteroid, true); // Power-up asteroid
         } else {
             explodeAsteroid.call(this, asteroid); // Regular asteroid
-            playerScore += (3 - asteroid.hitCount); // Scoring based on hitCount
+            if (asteroid.isClusterAsteroid) {
+                playerScore += 1; 
+            } else {
+                playerScore += (3 - asteroid.hitCount); 
+            }
             this.scoreText.setText(playerScore);
         }
     }
