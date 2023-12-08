@@ -404,30 +404,41 @@ function spawnAsteroidClusters() {
     const asteroidSprites = ['asteroid21', 'asteroid22', 'asteroid23', 'asteroid24', 'asteroid25', 'asteroid26'];
     const clusterSpeed = 40;
     const clusterRadius = 100;
+    const minSpacing = 30; // Minimum space between asteroids
 
     // Start position on the right, vertically centered
     const startX = this.sys.game.config.width + clusterRadius; 
     const startY = this.sys.game.config.height / 2;
 
+    let placedAsteroids = []; // Keep track of placed asteroid positions
+
     for (let i = 0; i < numberOfAsteroids; i++) {
-        // Random positions within the cluster radius
-        let x = startX + Phaser.Math.FloatBetween(-clusterRadius, clusterRadius);
-        let y = startY + Phaser.Math.FloatBetween(-clusterRadius, clusterRadius);
+        let asteroid, x, y;
+        let positionFound = false;
 
-        // Ensure asteroids are within the cluster radius
-        if (Phaser.Math.Distance.Between(startX, startY, x, y) <= clusterRadius) {
-            let asteroidSprite = Phaser.Math.RND.pick(asteroidSprites);
-            let asteroid = asteroids.get(x, y, asteroidSprite);
-            if (asteroid) {
-                asteroid.setActive(true).setVisible(true).setScale(0.34);
+        while (!positionFound) {
+            x = startX + Phaser.Math.FloatBetween(-clusterRadius, clusterRadius);
+            y = startY + Phaser.Math.FloatBetween(-clusterRadius, clusterRadius);
 
-                // Moving left with a fixed speed
-                asteroid.body.setVelocity(-clusterSpeed, 0);
+            // Check if the position is within the cluster radius and not overlapping
+            positionFound = Phaser.Math.Distance.Between(startX, startY, x, y) <= clusterRadius &&
+                            !placedAsteroids.some(pos => Phaser.Math.Distance.Between(pos.x, pos.y, x, y) < minSpacing);
 
-                asteroid.body.setImmovable(true);
-                asteroid.rotation = Phaser.Math.FloatBetween(0, Math.PI * 2);
-                asteroid.hitCount = 1;
+            if (positionFound) {
+                let asteroidSprite = Phaser.Math.RND.pick(asteroidSprites);
+                asteroid = asteroids.get(x, y, asteroidSprite);
             }
+        }
+
+        if (asteroid) {
+            asteroid.setActive(true).setVisible(true).setScale(0.34);
+            asteroid.body.setVelocity(-clusterSpeed, 0);
+            asteroid.body.setImmovable(true);
+            asteroid.rotation = Phaser.Math.FloatBetween(0, Math.PI * 2);
+            asteroid.hitCount = 1;
+
+            // Add the position of the placed asteroid
+            placedAsteroids.push({ x: x, y: y });
         }
     }
 }
