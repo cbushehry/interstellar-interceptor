@@ -14,12 +14,39 @@ function create() {
     background1 = this.add.tileSprite(0, 0, window.innerWidth, window.innerHeight, 'background1').setOrigin(0, 0).setDepth(-3);
     background2 = this.add.tileSprite(0, 0, window.innerWidth, window.innerHeight, 'background2').setOrigin(0, 0).setDepth(-3);
 
-    let earthX = window.innerWidth * 0.63;  // 67% to the right
-    let earthY = window.innerHeight * 0.25; // 34% from the top
+    // Earth
+    let earthX = window.innerWidth * 0.5; 
+    let earthY = window.innerHeight * 0.5;
+    this.earth = this.add.image(earthX, earthY, 'earth');
+    this.earth.setScale(0.34567);
+    this.earth.setDepth(-3);
 
-    let earth = this.add.image(earthX, earthY, 'earth');
-    earth.setScale(0.34567);
-    earth.setDepth(-2);
+    // Moon (initially off-screen)
+    let moonX = window.innerWidth + 100; // Start off-screen to the right
+    let moonY = window.innerHeight * 0.5;
+    this.moon = this.add.image(moonX, moonY, 'moon');
+    this.moon.setScale(0.2);
+    this.moon.setVisible(false); // Initially invisible
+
+    // Earth zoom out and move left
+    this.tweens.add({
+        targets: this.earth,
+        scale: 0.1, // Zoom out
+        x: -100, // Move off-screen to the left
+        ease: 'Linear',
+        duration: 240000, // 4 minutes
+    });
+
+    // Delayed action to start moving the Moon in
+    this.time.delayedCall(240000, () => {
+        this.moon.setVisible(true);
+        this.tweens.add({
+            targets: this.moon,
+            x: window.innerWidth * 0.5, // Move to the center of the screen
+            ease: 'Linear',
+            duration: 60000, // 1 minute
+        });
+    });
 
     createAnimations.call(this);
 
@@ -110,21 +137,21 @@ function create() {
     });
 
     this.asteroidTimer = this.time.addEvent({
-        delay: 27340,
+        delay: 8440,
         callback: spawnAsteroids,
         callbackScope: this,
         loop: true
     });
 
     this.asteroidClusterTimer = this.time.addEvent({
-        delay: 9400,
+        delay: 32400,
         callback: spawnAsteroidClusters,
         callbackScope: this,
         loop: true
     });
 
     this.asteroidPowerUpTimer = this.time.addEvent({
-        delay: 36340,
+        delay: 64340,
         callback: spawnAsteroidPowerUp,
         callbackScope: this,
         loop: true
@@ -194,7 +221,6 @@ function update() {
     var pointer = this.input.activePointer;
     var angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, pointer.x, pointer.y);
     this.player.rotation = Phaser.Math.Angle.RotateTo(this.player.rotation, angle, 0.02);
-
     let PLAYER_ACCEL = 10;
 
     if (controls.ACCELERATE.isDown) {
@@ -317,14 +343,14 @@ function activateShield() {
 }
 
 function shootLaser() {
-    let LASER_SPEED = 1100;
+    let LASER_SPEED = 1300;
     let currentTime = this.time.now;
     if (currentTime - this.lastShotTime < 200) {
         return;
     }
 
     this.lastShotTime = currentTime;
-    let laser = lasers.get(this.player.x, this.player.y, 'laser1');
+    let laser = lasers.get(this.player.x, this.player.y, 'laser2');
     if (laser) {
         laser.setActive(true);
         laser.setVisible(true);
