@@ -15,34 +15,35 @@ function create() {
     background2 = this.add.tileSprite(0, 0, window.innerWidth, window.innerHeight, 'background2').setOrigin(0, 0).setDepth(-3);
 
     // Earth
-    let earthX = window.innerWidth * 0.5; 
-    let earthY = window.innerHeight * 0.5;
+    let earthX = window.innerWidth * 0.47; 
+    let earthY = window.innerHeight * 0.65;
     this.earth = this.add.image(earthX, earthY, 'earth');
-    this.earth.setScale(0.34567);
+    this.earth.setScale(0.345);
     this.earth.setDepth(-3);
-
-    // Moon (initially off-screen)
-    let moonX = window.innerWidth + 100; // Start off-screen to the right
-    let moonY = window.innerHeight * 0.5;
-    this.moon = this.add.image(moonX, moonY, 'moon');
-    this.moon.setScale(0.2);
-    this.moon.setVisible(false); // Initially invisible
 
     // Earth zoom out and move left
     this.tweens.add({
         targets: this.earth,
         scale: 0.1, // Zoom out
-        x: -100, // Move off-screen to the left
+        x: -10, // Move off-screen to the left
         ease: 'Linear',
-        duration: 240000, // 4 minutes
+        duration: 30000//0, // 5 minutes
     });
 
-    // Delayed action to start moving the Moon in
-    this.time.delayedCall(240000, () => {
+    // Moon (initially off-screen)
+    let moonX = window.innerWidth + 100; // Start off-screen to the right
+    let moonY = window.innerHeight * 0.34;
+    this.moon = this.add.image(moonX, moonY, 'moon');
+    this.moon.setScale(0.234);
+    this.moon.setDepth(-3);
+    this.moon.setVisible(false); // Initially invisible
+
+    // Delayed action (5min) to start moving the Moon in
+    this.time.delayedCall(30000, () => {
         this.moon.setVisible(true);
         this.tweens.add({
             targets: this.moon,
-            x: window.innerWidth * 0.5, // Move to the center of the screen
+            x: window.innerWidth * 0.1, // Move to the center of the screen
             ease: 'Linear',
             duration: 60000, // 1 minute
         });
@@ -137,21 +138,21 @@ function create() {
     });
 
     this.asteroidTimer = this.time.addEvent({
-        delay: 8440,
+        delay: 4440,
         callback: spawnAsteroids,
         callbackScope: this,
         loop: true
     });
 
     this.asteroidClusterTimer = this.time.addEvent({
-        delay: 32400,
+        delay: 14400,
         callback: spawnAsteroidClusters,
         callbackScope: this,
         loop: true
     });
 
     this.asteroidPowerUpTimer = this.time.addEvent({
-        delay: 64340,
+        delay: 32340,
         callback: spawnAsteroidPowerUp,
         callbackScope: this,
         loop: true
@@ -366,7 +367,7 @@ function shootLaser() {
 }
 
 function spawnAsteroids() {
-    let asteroidSprite = Phaser.Math.RND.pick(['asteroid11', 'asteroid21', 'asteroid23']);
+    let asteroidSprite = Phaser.Math.RND.pick(['asteroid11', 'asteroid12', 'asteroid13', 'asteroid14', 'asteroid15']);
 
     let perimeterWidth = this.sys.game.config.width + 100;
     let perimeterHeight = this.sys.game.config.height + 100;
@@ -396,7 +397,7 @@ function spawnAsteroids() {
     if (asteroid) {
         asteroid.setActive(true).setVisible(true).setScale(0.34);;
 
-        let asteroidSpeed = 80; 
+        let asteroidSpeed = 50; 
         let angle = Phaser.Math.Angle.Between(x, y, this.player.x, this.player.y);
         let velocityX = Math.cos(angle) * asteroidSpeed;
         let velocityY = Math.sin(angle) * asteroidSpeed;
@@ -406,6 +407,8 @@ function spawnAsteroids() {
         asteroid.setData('initialPosition', {x: x, y: y});
         asteroid.body.setImmovable(true);
         asteroid.hitCount = 3;
+
+        asteroid.body.setAngularVelocity(Phaser.Math.Between(-34, 34)); // Adjust range as needed
     }
 }
 
@@ -488,7 +491,7 @@ function spawnAsteroidPowerUp() {
             break;
     }
 
-    let asteroidPowerUp = asteroids.get(x, y, 'asteroid43');
+    let asteroidPowerUp = asteroids.get(x, y, 'asteroid33');
     if (asteroidPowerUp) {
         asteroidPowerUp.setActive(true).setVisible(true).setScale(0.34);
         asteroidPowerUp.body.setVelocity(velocityX, velocityY);
@@ -547,7 +550,7 @@ function laserAsteroidCollision(laser, asteroid) {
 
     asteroid.hitCount -= 1;
     if (asteroid.hitCount <= 0) {
-        if (asteroid.texture.key === 'asteroid43') {
+        if (asteroid.texture.key === 'asteroid33') {
             explodeAsteroid.call(this, asteroid, true); // Power-up asteroid
         } else {
             explodeAsteroid.call(this, asteroid); // Regular asteroid
@@ -562,7 +565,7 @@ function laserAsteroidCollision(laser, asteroid) {
 }
 
 function explodeAsteroid(asteroid, isPowerUp = false) {
-    let explosionScale = 1.34;
+    let explosionScale = 1.54;
     let explosion = this.add.sprite(asteroid.x, asteroid.y, 'explosion1').play('explode');
     explosion.setScale(explosionScale);
     explosion.on('animationcomplete', () => {

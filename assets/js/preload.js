@@ -11,10 +11,22 @@ function preload() {
     this.load.image('shieldIcon', 'assets/images/extras/shieldIcon.png');
     this.load.image('shield', 'assets/images/extras/shield.png');
 
-    this.load.image('laser1', 'assets/images/lasers/laser1.png');
-    this.load.image('laser2', 'assets/images/lasers/laser2.png');
-    this.load.image('laser3', 'assets/images/lasers/laser3.png');
-    this.load.image('laser4', 'assets/images/lasers/laser4.png');
+    this.load.image('alienShip10', 'assets/images/alienShip/alienShip10.png');
+    this.load.image('alienShip11', 'assets/images/alienShip/alienShip11.png');
+    this.load.image('alienShip12', 'assets/images/alienShip/alienShip12.png');
+    this.load.image('alienShip21', 'assets/images/alienShip/alienShip21.png');
+    this.load.image('alienShip22', 'assets/images/alienShip/alienShip22.png');
+    this.load.image('alienShip30', 'assets/images/alienShip/alienShip30.png');
+    this.load.image('alienShip31', 'assets/images/alienShip/alienShip31.png');
+    this.load.image('alienShip32', 'assets/images/alienShip/alienShip32.png');
+    this.load.image('alienShip41', 'assets/images/alienShip/alienShip41.png');
+    this.load.image('alienShip42', 'assets/images/alienShip/alienShip42.png');
+    this.load.image('alienShip51', 'assets/images/alienShip/alienShip51.png');
+
+    this.load.image('laser1', 'assets/images/lasers/laser1.png'); // orange
+    this.load.image('laser2', 'assets/images/lasers/laser2.png'); // red
+    this.load.image('laser3', 'assets/images/lasers/laser3.png'); // blue
+    this.load.image('laser4', 'assets/images/lasers/laser4.png'); // green
 
     this.load.image('powerUp1', 'assets/images/powerups/powerUp1.png'); // + HEART
     this.load.image('powerUp2', 'assets/images/powerups/powerUp2.png'); // + SHIELD
@@ -38,7 +50,7 @@ function preload() {
     this.load.image('asteroid24', 'assets/images/asteroids/asteroid24.png');
     this.load.image('asteroid25', 'assets/images/asteroids/asteroid25.png');
     this.load.image('asteroid26', 'assets/images/asteroids/asteroid26.png');
-    this.load.image('asteroid43', 'assets/images/asteroids/asteroid43.png');
+    this.load.image('asteroid33', 'assets/images/asteroids/asteroid33.png');
 
     this.load.image('explosion1', 'assets/images/explosion/explosion1.png');
     this.load.image('explosion2', 'assets/images/explosion/explosion2.png');
