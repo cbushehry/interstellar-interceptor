@@ -18,7 +18,7 @@ function create() {
     let earthX = window.innerWidth * 0.47; 
     let earthY = window.innerHeight * 0.65;
     this.earth = this.add.image(earthX, earthY, 'earth');
-    this.earth.setScale(0.345);
+    this.earth.setScale(0.3456);
     this.earth.setDepth(-3);
 
     // Earth zoom out and move left
@@ -27,19 +27,19 @@ function create() {
         scale: 0.1, // Zoom out
         x: -10, // Move off-screen to the left
         ease: 'Linear',
-        duration: 30000//0, // 5 minutes
+        duration: 300000, // 5 minutes
     });
 
     // Moon (initially off-screen)
     let moonX = window.innerWidth + 100; // Start off-screen to the right
     let moonY = window.innerHeight * 0.34;
     this.moon = this.add.image(moonX, moonY, 'moon');
-    this.moon.setScale(0.234);
+    this.moon.setScale(0.12345);
     this.moon.setDepth(-3);
     this.moon.setVisible(false); // Initially invisible
 
     // Delayed action (5min) to start moving the Moon in
-    this.time.delayedCall(30000, () => {
+    this.time.delayedCall(300000, () => {
         this.moon.setVisible(true);
         this.tweens.add({
             targets: this.moon,
@@ -118,6 +118,11 @@ function create() {
         'shieldIcon'
     );
 
+    this.alienShip1 = this.physics.add.sprite(-100, Phaser.Math.Between(100, window.innerHeight - 100), 'alienShip10');
+    this.alienShip1.setScale(1.5); 
+    this.alienShip1.setDepth(1);
+    this.alienShip1.play('alienShip1'); // flight animation
+
     this.input.on('pointerdown', function () {
         this.isShooting = true;
     }, this);
@@ -138,14 +143,14 @@ function create() {
     });
 
     this.asteroidTimer = this.time.addEvent({
-        delay: 4440,
+        delay: 16440,
         callback: spawnAsteroids,
         callbackScope: this,
         loop: true
     });
 
     this.asteroidClusterTimer = this.time.addEvent({
-        delay: 14400,
+        delay: 64400,
         callback: spawnAsteroidClusters,
         callbackScope: this,
         loop: true
@@ -192,15 +197,27 @@ function createAnimations() {
         frameRate: 4,
         repeat: -1
     });
+
     this.anims.create({
         key: 'boostedFlight',
         frames: [
             { key: 'playerShip1' },
             { key: 'playerShip2' }
         ],
-        frameRate: 8,
+        frameRate: 10,
         repeat: -1
     });
+
+    this.anims.create({
+        key: 'alienShip1',
+        frames: [
+            { key: 'alienShip11' },
+            { key: 'alienShip12' }
+        ],
+        frameRate:5, 
+        repeat: -1 
+    });
+
     this.anims.create({
         key: 'explode',
         frames: [
@@ -294,6 +311,14 @@ function update() {
 
     if (this.isShooting) {
         shootLaser.call(this);
+    }
+
+    if (this.alienShip1.x < window.innerWidth + 100) {
+        this.alienShip1.x += 0.5; // Adjust speed as needed
+    } else {
+        this.alienShip1.x = -100;
+        this.alienShip1.y = Phaser.Math.Between(100, window.innerHeight - 100);
+        this.alienShip1.play('alienShipFlying'); // Restart the animation if needed
     }
 }
 

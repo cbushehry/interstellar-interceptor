@@ -34,11 +34,6 @@ function preload() {
     this.load.image('powerUp4', 'assets/images/powerups/powerUp4.png'); // + LASER SPEED
     this.load.image('powerUp5', 'assets/images/powerups/powerUp5.png'); // + LASER POWER
 
-    this.load.image('asteroid1', 'assets/images/asteroids/asteroid1.png');
-    this.load.image('asteroid2', 'assets/images/asteroids/asteroid2.png');
-    this.load.image('asteroid3', 'assets/images/asteroids/asteroid3.png');
-    this.load.image('asteroid4', 'assets/images/asteroids/asteroid4.png');
-
     this.load.image('asteroid11', 'assets/images/asteroids/asteroid11.png');
     this.load.image('asteroid12', 'assets/images/asteroids/asteroid12.png');
     this.load.image('asteroid13', 'assets/images/asteroids/asteroid13.png');
