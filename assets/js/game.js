@@ -76,7 +76,7 @@ function create() {
     this.playerShield.setScale(1.34);
     this.player.health = 3;
     this.player.shields = 1;
-    
+
     this.hearts = this.add.group({
         key: 'heart',
         repeat: this.player.health - 1,
@@ -118,11 +118,6 @@ function create() {
         'shieldIcon'
     );
 
-    this.alienShip1 = this.physics.add.sprite(-100, Phaser.Math.Between(100, window.innerHeight - 100), 'alienShip10');
-    this.alienShip1.setScale(1.5); 
-    this.alienShip1.setDepth(1);
-    this.alienShip1.play('alienShip1'); // flight animation
-
     this.input.on('pointerdown', function () {
         this.isShooting = true;
     }, this);
@@ -130,6 +125,8 @@ function create() {
     this.input.on('pointerup', function () {
         this.isShooting = false;
     }, this);
+
+    initAlienShips.call(this);
 
     lasers = this.physics.add.group({
         classType: Phaser.GameObjects.Sprite,
@@ -184,7 +181,17 @@ function create() {
     }).setOrigin(1, 0);
     
     this.physics.add.collider(this.player, asteroids, playerAsteroidCollision, null, this);
-    this.physics.add.collider(lasers, asteroids, laserAsteroidCollision, null, this);
+    this.physics.add.collider(lasers, [asteroids, this.alienShip1], laserObjectCollision, null, this);
+}
+
+function initAlienShips() {
+    //initialize AlienShip1
+    this.alienShip1 = this.physics.add.sprite(-100, Phaser.Math.Between(100, window.innerHeight - 100), 'alienShip10');
+    this.alienShip1.setActive(false).setVisible(false);
+    this.alienShip1.play('alienShip1');
+    this.alienShip1.hitCount = 5;
+    this.alienShip1.setScale(1.5);
+    this.alienShip1.setDepth(1);
 }
 
 function createAnimations() {
@@ -313,12 +320,12 @@ function update() {
         shootLaser.call(this);
     }
 
-    if (this.alienShip1.x < window.innerWidth + 100) {
+    // Handle the movement and ability of alienShip1
+    if (this.alienShip1.x < window.innerWidth * 0.2) { // Continue moving the alienShip1 to the right until it reaches 20% of the screen width
         this.alienShip1.x += 0.5; // Adjust speed as needed
     } else {
-        this.alienShip1.x = -100;
-        this.alienShip1.y = Phaser.Math.Between(100, window.innerHeight - 100);
-        this.alienShip1.play('alienShipFlying'); // Restart the animation if needed
+        // Once alienShip1 reaches 20% of the screen, it should start tracking the playerShip
+        spawnAlienShip1.call(this, this.alienShip1, this.player);
     }
 }
 
@@ -369,7 +376,7 @@ function activateShield() {
 }
 
 function shootLaser() {
-    let LASER_SPEED = 1300;
+    let LASER_SPEED = 1000;
     let currentTime = this.time.now;
     if (currentTime - this.lastShotTime < 200) {
         return;
@@ -389,6 +396,26 @@ function shootLaser() {
             laser.setActive(false).setVisible(false);
         }, [], this);
     }
+}
+
+function spawnAlienShip1(player) {
+    // Check if alienShip1 has been initialized
+    if (!this.alienShip1) {
+        console.error('alienShip1 has not been initialized');
+        return;
+    }
+
+    // Activate and make alienShip1 visible
+    this.alienShip1.setActive(true).setVisible(true);
+
+    // Calculate angle and rotation
+    var angle = Phaser.Math.Angle.Between(this.alienShip1.x, this.alienShip1.y, player.x, player.y);
+    this.alienShip1.rotation = angle;
+
+    // Optional: Add movement towards the player
+    // var speed = 50;
+    // this.alienShip1.body.velocity.x = Math.cos(angle) * speed;
+    // this.alienShip1.body.velocity.y = Math.sin(angle) * speed;
 }
 
 function spawnAsteroids() {
@@ -570,36 +597,48 @@ function playerAsteroidCollision(player, asteroid) {
     explodeAsteroid.call(this, asteroid);
 }
 
-function laserAsteroidCollision(laser, asteroid) {
+function laserObjectCollision(laser, object) {
     laser.setActive(false).setVisible(false);
 
-    asteroid.hitCount -= 1;
-    if (asteroid.hitCount <= 0) {
-        if (asteroid.texture.key === 'asteroid33') {
-            explodeAsteroid.call(this, asteroid, true); // Power-up asteroid
-        } else {
-            explodeAsteroid.call(this, asteroid); // Regular asteroid
-            if (asteroid.isClusterAsteroid) {
-                playerScore += 1; 
+    // Check if the collided object is alienShip1
+    if (object === this.alienShip1) {
+        // Reduce hitPoints and check for destruction
+        object.hitCount -= 1;
+        if (object.hitCount <= 0) {
+            // Trigger explosion and update score
+            explode.call(this, object);
+            playerScore += 10;
+            this.scoreText.setText(playerScore);
+            object.destroy();
+        }
+    } else if (object.hitCount !== undefined) {
+        // Collision with asteroids
+        object.hitCount -= 1;
+        if (object.hitCount <= 0) {
+            let isPowerUp = object.texture.key === 'asteroid33';
+            explode.call(this, object, isPowerUp); // Use the generic explode function
+            if (object.isClusterAsteroid) {
+                playerScore += 1;
             } else {
-                playerScore += (3 - asteroid.hitCount); 
+                playerScore += (3 - object.hitCount);
             }
             this.scoreText.setText(playerScore);
+            object.destroy(); // Destroy the asteroid
         }
     }
 }
 
-function explodeAsteroid(asteroid, isPowerUp = false) {
+function explode(object, isPowerUp = false) {
     let explosionScale = 1.54;
-    let explosion = this.add.sprite(asteroid.x, asteroid.y, 'explosion1').play('explode');
+    let explosion = this.add.sprite(object.x, object.y, 'explosion1').play('explode');
     explosion.setScale(explosionScale);
     explosion.on('animationcomplete', () => {
         explosion.destroy();
         if (isPowerUp) {
-            dropPowerUp.call(this, asteroid.x, asteroid.y);
+            dropPowerUp.call(this, object.x, object.y);
         }
     });
-    asteroid.destroy();
+    object.destroy(); // Move the destroy call here for generality
 }
 
 function updateTimer() {
