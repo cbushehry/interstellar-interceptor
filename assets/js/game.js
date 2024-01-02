@@ -192,6 +192,7 @@ function initAlienShips() {
     this.alienShip1.hitCount = 5;
     this.alienShip1.setScale(1.5);
     this.alienShip1.setDepth(1);
+    this.alienShip1.setImmovable(true);
 }
 
 function createAnimations() {
@@ -243,10 +244,12 @@ function createAnimations() {
 }
 
 function update() {
+    let PLAYER_ACCEL = 10;
     var pointer = this.input.activePointer;
     var angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, pointer.x, pointer.y);
     this.player.rotation = Phaser.Math.Angle.RotateTo(this.player.rotation, angle, 0.02);
-    let PLAYER_ACCEL = 10;
+
+    spawnAlienShip1.call(this, this.player);
 
     if (controls.ACCELERATE.isDown) {
         this.player.setVelocityX(this.player.body.velocity.x + Math.cos(this.player.rotation) * PLAYER_ACCEL * 0.1);
@@ -318,14 +321,6 @@ function update() {
 
     if (this.isShooting) {
         shootLaser.call(this);
-    }
-
-    // Handle the movement and ability of alienShip1
-    if (this.alienShip1.x < window.innerWidth * 0.2) { // Continue moving the alienShip1 to the right until it reaches 20% of the screen width
-        this.alienShip1.x += 0.5; // Adjust speed as needed
-    } else {
-        // Once alienShip1 reaches 20% of the screen, it should start tracking the playerShip
-        spawnAlienShip1.call(this, this.alienShip1, this.player);
     }
 }
 
@@ -408,14 +403,15 @@ function spawnAlienShip1(player) {
     // Activate and make alienShip1 visible
     this.alienShip1.setActive(true).setVisible(true);
 
-    // Calculate angle and rotation
-    var angle = Phaser.Math.Angle.Between(this.alienShip1.x, this.alienShip1.y, player.x, player.y);
-    this.alienShip1.rotation = angle;
-
-    // Optional: Add movement towards the player
-    // var speed = 50;
-    // this.alienShip1.body.velocity.x = Math.cos(angle) * speed;
-    // this.alienShip1.body.velocity.y = Math.sin(angle) * speed;
+    // Movement and tracking logic for alienShip1
+    if (this.alienShip1.x < window.innerWidth * 0.2) {
+        // Move alienShip1 to the right until it reaches 20% of the screen width
+        this.alienShip1.x += 2; // Adjust speed as needed
+    } else {
+        // Track playerShip
+        var angle = Phaser.Math.Angle.Between(this.alienShip1.x, this.alienShip1.y, player.x, player.y);
+        this.alienShip1.rotation = angle;
+    }
 }
 
 function spawnAsteroids() {
@@ -602,14 +598,12 @@ function laserObjectCollision(laser, object) {
 
     // Check if the collided object is alienShip1
     if (object === this.alienShip1) {
-        // Reduce hitPoints and check for destruction
         object.hitCount -= 1;
         if (object.hitCount <= 0) {
-            // Trigger explosion and update score
-            explode.call(this, object);
+            explode.call(this, object); // Handle explosion
             playerScore += 10;
             this.scoreText.setText(playerScore);
-            object.destroy();
+            object.destroy(); // Destroy the alienShip1
         }
     } else if (object.hitCount !== undefined) {
         // Collision with asteroids
