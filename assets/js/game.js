@@ -145,14 +145,14 @@ function create() {
     });
 
     this.asteroidClusterTimer = this.time.addEvent({
-        delay: 64400,
+        delay: 32880,
         callback: spawnAsteroidClusters,
         callbackScope: this,
         loop: true
     });
 
     this.asteroidPowerUpTimer = this.time.addEvent({
-        delay: 32340,
+        delay: 64340,
         callback: spawnAsteroidPowerUp,
         callbackScope: this,
         loop: true
@@ -537,7 +537,7 @@ function spawnAsteroidPowerUp() {
     let asteroidPowerUp = asteroids.get(x, y, 'asteroid33');
     if (asteroidPowerUp) {
         asteroidPowerUp.setActive(true).setVisible(true).setScale(0.34);
-        asteroid.isAsteroid = true;
+        asteroidPowerUp.isAsteroid = true;
         asteroidPowerUp.body.setVelocity(velocityX, velocityY);
         asteroidPowerUp.rotation = Phaser.Math.FloatBetween(0, Math.PI * 2);
         asteroidPowerUp.body.setImmovable(true);
