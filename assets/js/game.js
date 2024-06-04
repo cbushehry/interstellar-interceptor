@@ -565,7 +565,7 @@ function dropPowerUp(x, y) {
 
 function playerAsteroidCollision(player, asteroid) {
     if (player.isShieldActive) {
-        explodeAsteroid.call(this, asteroid);
+        explode.call(this, asteroid);
         return;
     }
 
@@ -575,18 +575,21 @@ function playerAsteroidCollision(player, asteroid) {
     player.isInvincible = true;
 
     let blinkCount = 0;
-    let blinkInterval = setInterval(() => {
-        player.setVisible(!player.visible);
-        blinkCount++;
+    this.time.addEvent({
+        delay: 500,
+        callback: () => {
+            player.setVisible(!player.visible);
+            blinkCount++;
 
-        if (blinkCount >= 6) {
-            clearInterval(blinkInterval);
-            player.setVisible(true);
-            player.isInvincible = false;
-        }
-    }, 500);
+            if (blinkCount >= 6) {
+                player.setVisible(true);
+                player.isInvincible = false;
+            }
+        },
+        repeat: 5
+    });
 
-    explodeAsteroid.call(this, asteroid);
+    explode.call(this, asteroid);
 }
 
 function laserObjectCollision(laser, object) {
@@ -631,7 +634,7 @@ function explode(object, isPowerUp = false) {
             dropPowerUp.call(this, object.x, object.y);
         }
     });
-    object.destroy(); // Move the destroy call here for generality
+    object.destroy();
 }
 
 function updateTimer() {
