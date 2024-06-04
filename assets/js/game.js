@@ -399,7 +399,7 @@ function spawnAlienShip1(player) {
     // Movement and tracking logic for alienShip1
     if (this.alienShip1.x < window.innerWidth * 0.2) {
         // Move alienShip1 to the right until it reaches 20% of the screen width
-        this.alienShip1.x += 2; // Adjust speed as needed
+        this.alienShip1.x += 0.5; // Adjust speed as needed
     } else {
         // Track playerShip
         var angle = Phaser.Math.Angle.Between(this.alienShip1.x, this.alienShip1.y, player.x, player.y);
