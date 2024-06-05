@@ -126,6 +126,8 @@ function create() {
         this.isShooting = false;
     }, this);
 
+    spawnAlienShip1.call(this, this.player);
+
     lasers = this.physics.add.group({
         classType: Phaser.GameObjects.Sprite,
         maxSize: 10000,
@@ -179,7 +181,7 @@ function create() {
     }).setOrigin(1, 0);
     
     this.physics.add.collider(this.player, asteroids, playerAsteroidCollision, null, this);
-    this.physics.add.collider(lasers, [asteroids, this.alienShip1], laserObjectCollision, null, this);
+    this.physics.add.collider(lasers, this.alienShips, laserObjectCollision, null, this);
 }
 
 function createAnimations() {
@@ -391,6 +393,7 @@ function spawnAlienShip1(player) {
         this.alienShip1.setDepth(1);
         this.alienShip1.setImmovable(true);
         this.alienShip1.isAlienShip = true;
+        this.alienShip1.startTracking = false; // Add a flag to start tracking
     }
 
     // Activate and make alienShip1 visible
@@ -400,10 +403,15 @@ function spawnAlienShip1(player) {
     if (this.alienShip1.x < window.innerWidth * 0.2) {
         // Move alienShip1 to the right until it reaches 20% of the screen width
         this.alienShip1.x += 0.5; // Adjust speed as needed
+    } else if (!this.alienShip1.startTracking) {
+        // Start tracking after reaching 20% of the screen width with a delay
+        this.time.delayedCall(1000, () => {
+            this.alienShip1.startTracking = true;
+        });
     } else {
-        // Track playerShip
+        // Track playerShip smoothly
         var angle = Phaser.Math.Angle.Between(this.alienShip1.x, this.alienShip1.y, player.x, player.y);
-        this.alienShip1.rotation = angle;
+        this.alienShip1.rotation = Phaser.Math.Angle.RotateTo(this.alienShip1.rotation, angle, 0.01); // Smooth rotation
     }
 }
 
@@ -595,19 +603,18 @@ function playerAsteroidCollision(player, asteroid) {
 function laserObjectCollision(laser, object) {
     laser.setActive(false).setVisible(false);
 
-    // Check if the collided object is alienShip1
-    if (object.isAlienShip) { // Updated this line
-        object.hitCount -= 1; // Reduces hitCount by 1 for each hit
+    // Check if the collided object is an alien ship
+    if (object.isAlienShip) {
+        object.hitCount -= 1; // Reduce hit count by 1 for each hit
         if (object.hitCount <= 0) {
             explode.call(this, object); // Handle explosion
             playerScore += 10; // Update player score
             this.scoreText.setText(playerScore);
             // Reset or respawn alienShip1 as needed
-            object.hitCount = 5; // Reset hitCount if you plan to respawn the same alienShip object
-            object.setActive(false).setVisible(false); // Deactivate and hide the alienShip1, or use object.destroy();
-            // Optionally respawn or reset alienShip1 here
+            object.hitCount = 5; // Reset hit count if you plan to respawn the same alien ship object
+            object.setActive(false).setVisible(false); // Deactivate and hide the alien ship
         }
-    } else if (object.isAsteroid) {  // Check if the object is an asteroid
+    } else if (object.isAsteroid) {
         // Collision with asteroids
         object.hitCount -= 1;
         if (object.hitCount <= 0) {
