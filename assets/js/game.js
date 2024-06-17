@@ -178,7 +178,9 @@ function create() {
         align: 'right'
     }).setOrigin(1, 0);
 
-    this.alienShips = this.physics.add.group();
+    this.alienShips = this.physics.add.group({
+        immovable: true  // Ensure all alien ships are immovable
+    });
 
     this.physics.add.collider(this.player, asteroids, playerAsteroidCollision, null, this);
     this.physics.add.collider(lasers, this.alienShips, laserObjectCollision, null, this);
@@ -385,7 +387,6 @@ function shootLaser() {
 }
 
 function spawnAlienShip1(player) {
-    // Initialize alienShip1 if it has not been already
     if (!this.alienShip1) {
         this.alienShip1 = this.physics.add.sprite(-100, Phaser.Math.Between(100, window.innerHeight - 100), 'alienShip10');
         this.alienShip1.setActive(false).setVisible(false);
@@ -393,28 +394,23 @@ function spawnAlienShip1(player) {
         this.alienShip1.hitCount = 5;
         this.alienShip1.setScale(1.5);
         this.alienShip1.setDepth(1);
-        this.alienShip1.setImmovable(true);
-        this.alienShip1.isAlienShip = true; // Ensure property is set correctly
-        this.alienShips.add(this.alienShip1); // Add to alienShips group
-        this.alienShip1.startTracking = false; // Add a flag to start tracking
+        this.alienShip1.setImmovable(true); // Ensure the alien ship is immovable
+        this.alienShip1.isAlienShip = true;
+        this.alienShips.add(this.alienShip1);
+        this.alienShip1.startTracking = false;
     }
 
-    // Activate and make alienShip1 visible
     this.alienShip1.setActive(true).setVisible(true);
 
-    // Movement and tracking logic for alienShip1
     if (this.alienShip1.x < window.innerWidth * 0.2) {
-        // Move alienShip1 to the right until it reaches 20% of the screen width
-        this.alienShip1.x += 0.5; // Adjust speed as needed
+        this.alienShip1.x += 0.5;
     } else if (!this.alienShip1.startTracking) {
-        // Start tracking after reaching 20% of the screen width with a delay
         this.time.delayedCall(1000, () => {
             this.alienShip1.startTracking = true;
         });
     } else {
-        // Track playerShip smoothly
         var angle = Phaser.Math.Angle.Between(this.alienShip1.x, this.alienShip1.y, player.x, player.y);
-        this.alienShip1.rotation = Phaser.Math.Angle.RotateTo(this.alienShip1.rotation, angle, 0.01); // Smooth rotation
+        this.alienShip1.rotation = Phaser.Math.Angle.RotateTo(this.alienShip1.rotation, angle, 0.01);
     }
 }
 
@@ -607,27 +603,22 @@ function laserObjectCollision(laser, object) {
     laser.setActive(false).setVisible(false);
 
     if (object.isAlienShip) {
-        object.hitCount -= 1; // Reduce hit count by 1 for each hit
+        object.hitCount -= 1;
         if (object.hitCount <= 0) {
-            explode.call(this, object); // Handle explosion
-            playerScore += 10; // Update player score
+            explode.call(this, object);
+            playerScore += 10;
             this.scoreText.setText(playerScore);
-            object.hitCount = 5; // Reset hit count if you plan to respawn the same alien ship object
-            object.setActive(false).setVisible(false); // Deactivate and hide the alien ship
+            object.hitCount = 5;
+            object.setActive(false).setVisible(false);
         }
     } else if (object.isAsteroid) {
-        // Collision with asteroids
         object.hitCount -= 1;
         if (object.hitCount <= 0) {
             let isPowerUp = object.texture.key === 'asteroid33';
-            explode.call(this, object, isPowerUp); // Use the generic explode function
-            if (object.isClusterAsteroid) {
-                playerScore += 1;
-            } else {
-                playerScore += (3 - object.hitCount);
-            }
+            explode.call(this, object, isPowerUp);
+            playerScore += (object.isClusterAsteroid ? 1 : (3 - object.hitCount));
             this.scoreText.setText(playerScore);
-            object.destroy(); // Destroy the asteroid
+            object.destroy();
         }
     }
 }
