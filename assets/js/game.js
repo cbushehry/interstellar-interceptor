@@ -183,6 +183,7 @@ function create() {
     });
 
     this.physics.add.collider(this.player, asteroids, playerAsteroidCollision, null, this);
+    this.physics.add.collider(lasers, asteroids, laserObjectCollision, null, this);
     this.physics.add.collider(lasers, this.alienShips, laserObjectCollision, null, this);
 
     spawnAlienShip1.call(this, this.player);
@@ -616,7 +617,7 @@ function laserObjectCollision(laser, object) {
         if (object.hitCount <= 0) {
             let isPowerUp = object.texture.key === 'asteroid33';
             explode.call(this, object, isPowerUp);
-            playerScore += (object.isClusterAsteroid ? 1 : (3 - object.hitCount));
+            playerScore += (object.isClusterAsteroid ? 1 : 3);
             this.scoreText.setText(playerScore);
             object.destroy();
         }
