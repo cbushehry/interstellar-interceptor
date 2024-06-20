@@ -10,6 +10,8 @@ Interstellar Interceptor is an action-packed space shooter game built with Phase
 - Various power-ups and upgrades
 - Score and timer tracking
 
+![](assets/images/interstellar-interceptor.png)
+
 ## 3. Credits / Contact
 This application was made by Cameron Bushehry
 
